@@ -2,12 +2,13 @@ import { useState, useEffect, useRef, useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { socket } from '../../socket/socket';
 import StickerMenu from '../sticker/stickerMenu';
+import ImageSearch from '../canvas/ImageSearch'; 
 import '../../App.css';
 
-// --- Konfiguration ---
 const WHEEL_RADIUS = 80;
 const ITEM_SIZE = 68;
 const COLORS = ['#000000', '#ffffff', '#1a6dd4', '#e23333', '#4caf50', '#ff9800', '#e91e8c', '#F5D800'];
+const SIZES = [4, 12, 24];
 
 interface ToolWheelProps {
   stickerModeActive: boolean;
@@ -21,22 +22,31 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
     mirrorMode, setMirrorMode, 
     activeLobbyId, 
     penWidth, setPenWidth,
-    showGrid, setShowGrid 
   } = useContext(AppContext);
 
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [activeSub, setActiveSub] = useState<'color' | 'size' | 'sticker' | null>(null);
+  const [activeSub, setActiveSub] = useState<'color' | 'size' | 'sticker' | 'image' | null>(null);
+
+  // State für den aktuell fokussierten Eintrag im Hauptmenü
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
+  // State für den aktuell fokussierten Eintrag im submenü
+  const [subIndex, setSubIndex] = useState<number>(0);
+
+  // Trigger-State, um ein Enter-Signal an Sticker/Bilder-Komponenten weiterzureichen
+  const [triggerSelect, setTriggerSelect] = useState<boolean>(false);
+
   const wheelRef = useRef<HTMLDivElement>(null);
 
-  // Rechtsklick-Steuerung / Shortcut zum Öffnen
+  // Rechte Mausklick --> Shortcut zum Öffnen
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       setPos({ x: e.clientX, y: e.clientY });
       setVisible(true);
+      setActiveIndex(0); // Setzt den Fokus beim Öffnen zurück auf das erste Element
       
-      // CRITICAL: Wenn der Sticker-Modus aktiv ist, direkt ins Sticker-Submenü springen!
       if (stickerModeActive) {
         setActiveSub('sticker');
       } else {
@@ -57,22 +67,33 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
     };
   }, [stickerModeActive]);
 
+  // Fokus im Submenü zurücksetzen, sobald sich activeSub ändert
+  useEffect(() => {
+    setSubIndex(0);
+    setTriggerSelect(false);
+  }, [activeSub]);
+
   const toggleMirror = () => {
     const next = !mirrorMode;
     setMirrorMode(next);
     if (activeLobbyId) socket.emit("toggleMirrorMode", activeLobbyId);
   };
 
-  // Callback, wenn im verlinkten StickerMenu eine Auswahl getroffen wurde
   const handleStickerSelected = () => {
-    setVisible(false); // Schließt das ToolWheel sofort nach der Auswahl
+    setVisible(false); 
+    setActiveSub(null);
   };
 
-  // Funktion zum Beenden des Sticker-Modus
   const deactivateStickerMode = () => {
     setStickerModeActive(false);
-    setTool('pen');      // Setzt das Werkzeug zurück auf Default (Stift)
-    setActiveSub(null);  // Schaltet das Untermenü zurück zur Hauptansicht
+    setTool('pen');      
+    setActiveSub(null);  
+  };
+
+  // Wird aufgerufen, wenn im Bilder-Submenü ein Bild ausgewählt wurde
+  const handleImageSelected = () => {
+    setVisible(false);
+    setActiveSub(null);
   };
 
   const menuItems = [
@@ -80,9 +101,99 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
     { id: 'color', icon: '🎨', label: 'Farbe', action: () => setActiveSub('color') },
     { id: 'size', icon: '⬤', label: 'Größe', action: () => setActiveSub('size') },
     { id: 'sticker', icon: '✨', label: 'Sticker', action: () => { setStickerModeActive(true); setTool('shape'); setActiveSub('sticker'); } },
-    { id: 'grid', icon: '▦', label: 'Grid', action: () => { setShowGrid(!showGrid); setVisible(false); } },
+    { id: 'image', icon: '🖼️', label: 'Bilder', action: () => setActiveSub('image') },
     { id: 'mirror', icon: '🪞', label: 'Mirror', action: toggleMirror, active: mirrorMode },
   ];
+
+  // Tastatursteuerung für Navigation im Hauptmenü UND in den Submenüs
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!visible) return;
+
+      // Hauptmenü (ohne sub aktiv)
+      if (activeSub === null) {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          setActiveIndex((prevIndex) => (prevIndex + 1) % menuItems.length);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          menuItems[activeIndex].action();
+        }
+        return;
+      }
+
+      // submenü colorselector
+      if (activeSub === 'color') {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          setSubIndex((prev) => (prev + 1) % COLORS.length);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          setCurrentColor(COLORS[subIndex]);
+          setActiveSub(null);
+          setVisible(false);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setActiveSub(null);
+        }
+        return;
+      }
+
+      // submenü stiftgröße
+      if (activeSub === 'size') {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          setSubIndex((prev) => (prev + 1) % SIZES.length);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          setPenWidth(SIZES[subIndex]);
+          setActiveSub(null);
+          setVisible(false);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setActiveSub(null);
+        }
+        return;
+      }
+
+      // submenü sticker
+      if (activeSub === 'sticker') {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          // Erhöht den Index fortlaufend; das Modulo-Limit wird im StickerMenu berechnet
+          setSubIndex((prev) => prev + 1);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          setTriggerSelect(true); // Signalisiert Auswahl
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          deactivateStickerMode();
+        }
+        return;
+      }
+
+      // submenü bilder
+      if (activeSub === 'image') {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          // Erhöht den Index fortlaufend; das Modulo-Limit wird im ImageSearch berechnet
+          setSubIndex((prev) => prev + 1);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          setTriggerSelect(true); // Signalisiert ImageSearch die Auswahl
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setActiveSub(null);
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [visible, activeIndex, subIndex, activeSub, menuItems]);
 
   if (!visible) return null;
 
@@ -99,14 +210,23 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
             const x = Math.cos(angle) * WHEEL_RADIUS - ITEM_SIZE / 2;
             const y = Math.sin(angle) * WHEEL_RADIUS - ITEM_SIZE / 2;
 
+            const isKeyboardFocused = i === activeIndex;
+
             return (
               <button
                 key={item.id}
                 onClick={item.action}
                 style={{
                   ...itemStyle,
-                  left: x, top: y,
-                  border: (item.id === 'pen' && tool === 'pen') || item.active ? '2px solid #F5D800' : '1px solid rgba(0,0,0,0.05)'
+                  left: x,
+                  top: y,
+                  border: isKeyboardFocused
+                    ? '3px solid #1a6dd4' 
+                    : (item.id === 'pen' && tool === 'pen') || item.active 
+                      ? '2px solid #F5D800' 
+                      : '1px solid rgba(0,0,0,0.05)',
+                  transform: isKeyboardFocused ? 'scale(1.18)' : 'scale(1)',
+                  zIndex: isKeyboardFocused ? 100 : 1
                 }}
               >
                 <span style={{ fontSize: '22px' }}>{item.icon}</span>
@@ -124,22 +244,31 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
             <button onClick={() => setActiveSub(null)} style={backButtonStyle}>Zurück</button>
           </div>
           <div style={colorGridStyle}>
-            {COLORS.map(c => (
-              <div 
-                key={c} 
-                onClick={() => { 
-                  setCurrentColor(c); 
-                  setActiveSub(null); 
-                  setVisible(false); 
-                }} 
-                style={{ 
-                  ...colorCircleStyle, 
-                  background: c, 
-                  outline: currentColor === c ? '2px solid #1a6dd4' : '1px solid rgba(0,0,0,0.2)',
-                  outlineOffset: '2px'
-                }} 
-              />
-            ))}
+            {COLORS.map((c, i) => {
+              const isKeyboardFocused = i === subIndex;
+              return (
+                <div 
+                  key={c} 
+                  onClick={() => { 
+                    setCurrentColor(c); 
+                    setActiveSub(null); 
+                    setVisible(false); 
+                  }} 
+                  style={{ 
+                    ...colorCircleStyle, 
+                    background: c, 
+                    outline: isKeyboardFocused
+                      ? '3px solid #1a6dd4'
+                      : currentColor === c 
+                        ? '2px solid #1a6dd4' 
+                        : '1px solid rgba(0,0,0,0.2)',
+                    outlineOffset: '2px',
+                    transform: isKeyboardFocused ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'transform 0.15s ease, outline 0.15s ease'
+                  }} 
+                />
+              );
+            })}
           </div>
           <input type="color" value={currentColor} onChange={(e) => setCurrentColor(e.target.value)} style={{ width: '100%', marginTop: '12px', cursor: 'pointer' }} />
         </div>
@@ -153,34 +282,68 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
             <button onClick={() => setActiveSub(null)} style={backButtonStyle}>Zurück</button>
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-            {[4, 12, 24].map(s => (
-              <div 
-                key={s} 
-                onClick={() => { 
-                  setPenWidth(s); 
-                  setActiveSub(null);
-                  setVisible(false); 
-                }} 
-                style={{ ...sizeCircleStyle, width: s + 40, height: s + 40, border: penWidth === s ? '2px solid #1a6dd4' : '1px solid #ccc' }}
-              >
-                <div style={{ width: s, height: s, background: 'black', borderRadius: '50%' }} />
-              </div>
-            ))}
+            {SIZES.map((s, i) => {
+              const isKeyboardFocused = i === subIndex;
+              return (
+                <div 
+                  key={s} 
+                  onClick={() => { 
+                    setPenWidth(s); 
+                    setActiveSub(null);
+                    setVisible(false); 
+                  }} 
+                  style={{ 
+                    ...sizeCircleStyle, 
+                    width: s + 40, height: s + 40, 
+                    border: isKeyboardFocused
+                      ? '3px solid #1a6dd4'
+                      : penWidth === s 
+                        ? '2px solid #1a6dd4' 
+                        : '1px solid #ccc',
+                    transform: isKeyboardFocused ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'transform 0.15s ease, border 0.15s ease'
+                  }}
+                >
+                  <div style={{ width: s, height: s, background: 'black', borderRadius: '50%' }} />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* ANSICHT 4: UNTERMENÜ STICKER (Viereckiges Container-Fenster mit Scrollbereich) */}
+      {/* ANSICHT 4: UNTERMENÜ STICKER */}
       {activeSub === 'sticker' && (
-        <div style={{ ...squareContainerStyle, width: '280px', height: '320px' }}> {/* Etwas geräumiger für Stickerkategorien */}
+        <div style={{ ...squareContainerStyle, width: '280px', height: '320px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: '8px', marginBottom: '8px' }}>
             <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>Sticker</span>
             <button onClick={deactivateStickerMode} style={exitStickerModeButtonStyle}>Mode beenden</button>
           </div>
           
-          {/* Scrollbarer Content für deine Sticker-Kategorien */}
           <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
-            <StickerMenu onSelect={handleStickerSelected} />
+            <StickerMenu 
+              onSelect={handleStickerSelected} 
+              focusedIndex={subIndex}
+              triggerSelect={triggerSelect}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ANSICHT 5: UNTERMENÜ BILDER */}
+      {activeSub === 'image' && (
+        <div style={{ ...squareContainerStyle, width: '500px', height: '580px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: '8px', marginBottom: '8px' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>Bilder suchen</span>
+            <button onClick={() => setActiveSub(null)} style={backButtonStyle}>Zurück</button>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+            <ImageSearch 
+              onSelect={handleImageSelected} 
+              focusedIndex={subIndex}
+              triggerSelect={triggerSelect}
+            />
           </div>
         </div>
       )}
@@ -195,7 +358,7 @@ const itemStyle: React.CSSProperties = {
   background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(10px)',
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
   boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid rgba(255,255,255,0.2)',
-  transition: 'transform 0.2s ease'
+  transition: 'transform 0.15s ease, border 0.15s ease'
 };
 
 const centerStyle: React.CSSProperties = {

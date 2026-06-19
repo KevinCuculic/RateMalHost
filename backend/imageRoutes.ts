@@ -11,7 +11,7 @@ router.get("/search-images", async (req, res) => {
   }
 
   const response = await fetch(
-    `https://api.pexels.com/v1/search?query=${query}&per_page=10`,
+    `https://api.pexels.com/v1/search?query=${query}&per_page=9`,
     {
       headers: {
         Authorization: process.env.PEXELS_API_KEY!,
