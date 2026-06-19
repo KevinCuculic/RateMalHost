@@ -1,49 +1,44 @@
+import { useEffect, useRef } from 'react';
 
-import { useEffect, useState, useContext } from "react";
-import { AppContext } from "../context/AppContext";
-import { COLORS } from "../components/toolbar/ColorPicker";
+interface MenuItem {
+  id: string;
+  action: () => void;
+}
 
+export function useToolWheelKeyboard(
+  visible: boolean,
+  activeSub: string | null,
+  menuItems: MenuItem[]
+) {
+  const selectedIndexRef = useRef(0);
 
-export type ScanMode ="color";
-//later : "shape" , "sticker" , "mode"
+  useEffect(() => {
+    if (!visible || activeSub !== null) return;
 
-
-export function twoKeyControls(){
-  const { setCurrentColor } = useContext(AppContext);
-
-  const [scanMode] = useState<ScanMode>("color");
-  const [scanIndex, setScanIndex] = useState(0);
-
-
-   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // SPACE = keep going
-      if (e.key === " ") {
-        setScanIndex((i) => (i + 1) % COLORS.length);
+      const max = menuItems.length;
+
+      if (e.key === 'ArrowLeft') {
+        selectedIndexRef.current =
+          (selectedIndexRef.current - 1 + max) % max;
       }
 
-      // ENTER = confirm
-      if (e.key === "Enter") {
-        if (scanMode === "color") {
-          setCurrentColor(COLORS[scanIndex]);
-        }
+      if (e.key === 'ArrowRight') {
+        selectedIndexRef.current =
+          (selectedIndexRef.current + 1) % max;
+      }
+
+      if (e.key === 'Enter') {
+        menuItems[selectedIndexRef.current]?.action();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [scanIndex, scanMode, setCurrentColor]);
+    window.addEventListener('keydown', handleKeyDown);
 
-  return {
-    scanIndex,
-    scanMode,
-  };
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [visible, activeSub, menuItems]);
 
-
+  return selectedIndexRef;
 }
-
-
-
-
-
-
