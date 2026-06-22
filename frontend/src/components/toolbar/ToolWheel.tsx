@@ -22,6 +22,7 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
     mirrorMode, setMirrorMode, 
     activeLobbyId, 
     penWidth, setPenWidth,
+    stickerSize, setStickerSize,
   } = useContext(AppContext);
 
   const [visible, setVisible] = useState(false);
@@ -320,6 +321,26 @@ export default function ToolWheel({ stickerModeActive, setStickerModeActive }: T
             <button onClick={deactivateStickerMode} style={exitStickerModeButtonStyle}>Mode beenden</button>
           </div>
           
+
+          {/* HIER SLIDER */}
+          <div style={{ marginBottom: '12px', background: '#f9f9f9', padding: '8px', borderRadius: '8px', border: '1px solid #eee' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#666' }}>Sticker-Größe:</label>
+              <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#1a6dd4' }}>
+                {stickerSize || 60}px
+              </span>
+            </div>
+            <input 
+              type="range" 
+              min="20" 
+              max="300" 
+              value={stickerSize || 60} 
+              onChange={(e) => setStickerSize(parseInt(e.target.value))} // Verwendet jetzt den sauberen Setter
+              style={{ width: '100%', accentColor: '#1a6dd4', cursor: 'pointer', margin: 0 }}
+            />
+          </div>
+
+
           <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
             <StickerMenu 
               onSelect={handleStickerSelected} 

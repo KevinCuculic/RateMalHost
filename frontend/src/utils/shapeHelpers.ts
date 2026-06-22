@@ -5,6 +5,10 @@
   export type Point = { x: number; y: number };
 
 
+
+
+  ///---------------------------
+  // Shapes Functions
   export const createPermanentBlobShape = (
     radius = 28,
     points = 55,
@@ -63,6 +67,65 @@ export const drawStar = (ctx: CanvasRenderingContext2D, x: number, y: number, co
 
 
 
+export const drawHeart = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string, size: number = 60) => {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  
+  // Wir bewegen uns zur oberen Mitte des Herzens und zeichnen zwei Bezier-Kurven
+  const d = size / 2;
+  ctx.moveTo(x, y - d / 4);
+  // Linke Herzhälfte
+  ctx.bezierCurveTo(x - d / 2, y - d, x - d, y - d / 3, x, y + d / 2);
+  // Rechte Herzhälfte
+  ctx.bezierCurveTo(x + d, y - d / 3, x + d / 2, y - d, x, y - d / 4);
+  
+  ctx.closePath();
+  ctx.fill();
+};
+
+
+export const drawPolygon = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string, size: number = 60, sides: number = 6) => {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  
+  // Multiplikator (0.85), damit die Form optisch der Bounding-Box eines Emojis entspricht
+  const radius = (size * 0.85) / 2; 
+  
+  for (let i = 0; i < sides; i++) {
+    const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+    ctx.lineTo(x + radius * Math.cos(angle), y + radius * Math.sin(angle));
+  }
+  ctx.closePath();
+  ctx.fill();
+};
+
+
+
+export const drawTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string, size: number = 60) => {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  
+  // Optischer Skalierungsfaktor, damit es zum Ghost passt
+  const s = size * 0.85; 
+  
+  // Berechnung basierend auf dem echten geometrischen Schwerpunkt:
+  const height = s * (Math.sqrt(3) / 2);
+  const up = height * (2 / 3);   // Abstand zur oberen Spitze
+  const down = height * (1 / 3); // Abstand zur Basis
+  
+  ctx.moveTo(x, y - up);             // Obere Spitze
+  ctx.lineTo(x - s / 2, y + down);   // Unten links
+  ctx.lineTo(x + s / 2, y + down);   // Unten rechts
+  
+  ctx.closePath();
+  ctx.fill();
+};
+
+
+
+//----------------------------------
+//-----------------------------
+
 
 export const drawImageSticker = (
   ctx: CanvasRenderingContext2D, 
@@ -82,13 +145,27 @@ export const drawImageSticker = (
 
 
 
-// Zentraler Mapper
+// central Mapper
 export const SHAPE_RENDERERS: Record<string, Function> = {
+
   blob: drawBlob,
   star: drawStar,
-  //blob: (ctx: any, x: any, y: any, color: any, size: any) => drawBlob(ctx, x, y, color, size),
-  //star: (ctx: any, x: any, y: any, color: any, size: any) => drawStar(ctx, x, y, color, size),
-  //sun: (ctx: any, x: any, y: any, color: any) => { /* Sonne Logik */ },
+  heart: drawHeart,
+  hexagon: (ctx: any, x: any, y: any, color: any, size: any) => drawPolygon(ctx, x, y, color, size, 6), // 6 Ecken
+  triangle: drawTriangle,
+  square: (ctx: any, x: any, y: any, color: any, size: any) => {
+    ctx.fillStyle = color;
+    // Leicht verkleinert (size * 0.75), damit das Quadrat nicht massiv größer wirkt als runde Emojis
+    const s = size * 0.75; 
+    ctx.fillRect(x - s / 2, y - s / 2, s, s);
+  },
+  circle: (ctx: any, x: any, y: any, color: any, size: any) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    // Nutzt radius basierend auf angepasster Größe
+    ctx.arc(x, y, (size * 0.8) / 2, 0, Math.PI * 2);
+    ctx.fill();
+  },
 
   
   // Für Bild-Sticker (tree2):
@@ -110,11 +187,12 @@ export const renderSticker = (
   x: number,
   y: number,
   size: number,
-  allStickers: any[] // List of Sticker 
+  allStickers: any[], // List of Sticker 
+  currentColor?: string
 ) => {
   //  Check for SHAPE_RENDERERS (mathematische Formen)
   if (SHAPE_RENDERERS[id]) {
-    SHAPE_RENDERERS[id](ctx, x, y, "#000", size); // Farbe ggf. aus Context
+    SHAPE_RENDERERS[id](ctx, x, y, currentColor || ctx.fillStyle, size); // Farbe ggf. aus Context
     return;
   }
 

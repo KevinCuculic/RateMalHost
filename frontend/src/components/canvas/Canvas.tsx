@@ -54,6 +54,11 @@ export default function Canvas() {
 
   const handleMouseDown= (e: React.MouseEvent)=> {
 
+    // if not left mouse button
+    if (e.button !== 0) {
+      return;
+    }
+
     if ( tool === "shape" && activeShape && previewPos) {
       confirmPlacement(previewPos.x, previewPos.y);
     } else{
@@ -85,7 +90,7 @@ export default function Canvas() {
   const renderEvent = (ctx: CanvasRenderingContext2D, data: any) => {
 
     if (data.type === "shape") {
-      renderSticker(ctx, data.shapeType, data.x, data.y, data.size || 60, allStickers);
+      renderSticker(ctx, data.shapeType, data.x, data.y, data.size || 60, allStickers, currentColor);
     } else if (data.type === "line") {
       ctx.strokeStyle = data.color;
       ctx.lineWidth = data.width ?? 4;
@@ -96,7 +101,6 @@ export default function Canvas() {
       ctx.stroke();
     }
   };
-
 
 
 
@@ -126,6 +130,12 @@ export default function Canvas() {
 
   const startDraw = (e: MouseEvent | TouchEvent) => {
     if (!activeLobbyId) return;
+
+
+    if ("button" in e && e.button !== 0) {
+      return;
+    }
+
     const p = getPos(e);
     const ctx = canvasRef.current!.getContext("2d")!;
 
