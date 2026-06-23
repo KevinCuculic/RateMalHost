@@ -374,6 +374,12 @@ export default function MemoryPage() {
     cardRefs.current[nextIndex]?.focus();
   };
 
+  const isCardUnavailable = (card: MemoryCard) =>
+    card.isFlipped ||
+    card.isMatched ||
+    (mode === "solo" && (localLocked || localStatus !== "playing")) ||
+    (mode === "multi" && (!!remoteState?.locked || !canPlayRemote || remoteState?.status !== "playing"));
+
   const loadSearchSuggestions = async () => {
     const trimmed = query.trim();
     if (!trimmed) return;
@@ -704,6 +710,9 @@ export default function MemoryPage() {
           ) : (
             <div className="memory-board" role="list" aria-label={`Memory Spielfeld mit ${activeCards.length} Karten`}>
               {activeCards.map((card, index) => (
+                (() => {
+                  const unavailable = isCardUnavailable(card);
+                  return (
                 <button
                   key={card.id}
                   ref={(el) => {
@@ -712,7 +721,7 @@ export default function MemoryPage() {
                   className={`memory-card ${card.isFlipped || card.isMatched ? "is-open" : ""} ${card.isMatched ? "is-matched" : ""}`}
                   onClick={() => handleCardClick(card)}
                   onKeyDown={(event) => handleCardKeyDown(event, index)}
-                  disabled={card.isFlipped || card.isMatched || (mode === "solo" && (localLocked || localStatus !== "playing")) || (mode === "multi" && (!!remoteState?.locked || !canPlayRemote || remoteState?.status !== "playing"))}
+                  aria-disabled={unavailable}
                   title={
                     card.isMatched
                       ? "Dieses Paar wurde schon gefunden."
@@ -739,6 +748,8 @@ export default function MemoryPage() {
                     <small>{card.title}</small>
                   </span>
                 </button>
+                  );
+                })()
               ))}
             </div>
           )}

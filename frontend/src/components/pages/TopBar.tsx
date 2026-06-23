@@ -98,7 +98,7 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
             )}
             {selectedMode === "paint-by-numbers" && (
               <div className="top-bar-element">
-                <PBNGame />
+                <PBNGame autoOpen />
               </div>
             )}
             {!isPaintByNumbers && (

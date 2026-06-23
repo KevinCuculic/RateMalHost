@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { createPortal } from "react-dom";
 import { AppContext } from "../../context/AppContext";
@@ -52,7 +52,7 @@ function downscaleImage(file: File): Promise<string> {
   });
 }
 
-export default function PBNGame() {
+export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
   const { activeLobbyId, currentColor, setCurrentColor, pbnPalette, setPbnPalette, isAuthenticated } =
     useContext(AppContext);
 
@@ -69,6 +69,7 @@ export default function PBNGame() {
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string | null>(null);
   const [portalEl] = useState(() => document.createElement("div"));
+  const didAutoOpen = useRef(false);
 
   useEffect(() => {
     document.body.appendChild(portalEl);
@@ -76,6 +77,12 @@ export default function PBNGame() {
       document.body.removeChild(portalEl);
     };
   }, [portalEl]);
+
+  useEffect(() => {
+    if (!autoOpen || didAutoOpen.current) return;
+    didAutoOpen.current = true;
+    setOpen(true);
+  }, [autoOpen]);
 
   // Clear the shared palette when leaving PBN mode (component unmounts) so the
   // tool wheel only shows PBN colours while this mode is active.

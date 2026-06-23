@@ -4,7 +4,7 @@
   padding: 14px 20px 18px;
   background: #e7efe9;
   color: #1f2937;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .memory-toolbar {
@@ -75,7 +75,7 @@
 .memory-panel {
   padding: 12px;
   max-height: calc(100vh - 112px);
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
 }
@@ -184,7 +184,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 8px;
-  overflow: hidden;
+  overflow: auto;
   max-height: none;
 }
 
@@ -305,7 +305,7 @@
   grid-template-columns: 1fr;
   gap: 6px;
   margin: 0;
-  overflow: hidden;
+  overflow: auto;
   max-height: none;
 }
 
@@ -410,7 +410,7 @@
   padding: 12px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .memory-status,
@@ -452,7 +452,7 @@
   align-content: center;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .memory-card {
@@ -468,7 +468,7 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.memory-card:hover:not(:disabled) {
+.memory-card:hover:not([aria-disabled="true"]) {
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(26, 109, 212, 0.24);
 }
@@ -478,7 +478,7 @@
   outline-offset: 4px;
 }
 
-.memory-card:disabled {
+.memory-card[aria-disabled="true"] {
   cursor: default;
 }
 
@@ -702,7 +702,7 @@
 @media (max-width: 900px) {
   .memory-page {
     padding: 16px;
-    overflow: hidden;
+    overflow: auto;
   }
 
   .memory-toolbar {
