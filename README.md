@@ -1,4 +1,14 @@
 # RateMal
+
+## Render logs
+
+For troubleshooting hosted deployments, Render recommends these options:
+
+- Render dashboard logs for quick checks during deploys.
+- Render CLI for reading logs from the terminal: https://render.com/docs/cli
+- Render MCP Server for tool-assisted debugging: https://render.com/docs/mcp-server
+- Log stream integrations for longer-term monitoring: https://render.com/docs/log-streams
+
 (in order to use it as it is now: needed: node.js, browser 
 open a terminal for frontend and backend directory: npm run dev in both, 
 access the application over link in frontend terminal )

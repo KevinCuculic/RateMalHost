@@ -1,7 +1,8 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AppContext } from "../../context/AppContext";
 import { searchImages } from "../../api/imageApi";
-import { listDrawings } from "../../api/drawingsApi";
+import { listDrawings, type DrawingSummary } from "../../api/drawingsApi";
 import { socket } from "../../socket/socket";
 import {
   flipMemoryCard,
@@ -101,6 +102,11 @@ export default function MemoryPage() {
   const [manualUrl, setManualUrl] = useState("");
   const [loadingDeck, setLoadingDeck] = useState(false);
   const [deckMessage, setDeckMessage] = useState<string | null>(null);
+  const [savedPickerOpen, setSavedPickerOpen] = useState(false);
+  const [savedDrawings, setSavedDrawings] = useState<DrawingSummary[]>([]);
+  const [savedDrawingsError, setSavedDrawingsError] = useState<string | null>(null);
+  const [loadingSavedDrawings, setLoadingSavedDrawings] = useState(false);
+  const [portalEl] = useState(() => document.createElement("div"));
   const [pairCount, setPairCount] = useState(8);
   const [moveLimitMode, setMoveLimitMode] = useState<"unlimited" | "20" | "50" | "custom">("unlimited");
   const [customMoveLimit, setCustomMoveLimit] = useState(30);
@@ -115,6 +121,13 @@ export default function MemoryPage() {
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("Memory bereit.");
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    document.body.appendChild(portalEl);
+    return () => {
+      document.body.removeChild(portalEl);
+    };
+  }, [portalEl]);
 
   useEffect(() => {
     const handleState = (state: MemoryState | null) => setRemoteState(state);
@@ -392,29 +405,30 @@ export default function MemoryPage() {
     }
   };
 
-  const loadDrawingDeck = async () => {
-    setLoadingDeck(true);
-    setDeckMessage(null);
-    try {
-      const drawings = await listDrawings();
-      const nextDeck = drawings.slice(0, MAX_PAIRS).map((drawing) => ({
-        title: drawing.title,
-        imageUrl: drawing.thumbnail,
-      }));
-      if (nextDeck.length < 2) {
-        const message = "Du brauchst mindestens zwei gespeicherte Zeichnungen.";
-        setDeckMessage(message);
-        setLiveMessage(message);
-        return;
-      }
-      applyDeck(nextDeck, `${nextDeck.length} gespeicherte Zeichnungen geladen. Solo wurde neu gemischt.`);
-    } catch {
-      const message = "Melde dich an, um eigene Zeichnungen zu laden.";
+  const openSavedDrawingsPicker = async () => {
+    if (!isAuthenticated) {
+      const message = "Melde dich an, um gespeicherte Zeichnungen zu laden.";
       setDeckMessage(message);
       setLiveMessage(message);
-    } finally {
-      setLoadingDeck(false);
+      return;
     }
+
+    setSavedPickerOpen(true);
+    setLoadingSavedDrawings(true);
+    setSavedDrawingsError(null);
+    try {
+      const drawings = await listDrawings();
+      setSavedDrawings(drawings);
+      if (drawings.length === 0) setSavedDrawingsError("Noch keine gespeicherten Zeichnungen gefunden.");
+    } catch {
+      setSavedDrawingsError("Gespeicherte Zeichnungen konnten nicht geladen werden.");
+    } finally {
+      setLoadingSavedDrawings(false);
+    }
+  };
+
+  const addSavedDrawingToDeck = (drawing: DrawingSummary) => {
+    addToDeck({ title: drawing.title, imageUrl: drawing.thumbnail });
   };
 
   const handleUpload = (files: FileList | null) => {
@@ -618,7 +632,7 @@ export default function MemoryPage() {
                 <button className="btn btn-secondary" onClick={() => applyDeck(DEFAULT_DECK, "Standardbilder geladen. Solo wurde neu gemischt.")}>
                   Standarddeck
                 </button>
-                <button className="btn btn-secondary" onClick={loadDrawingDeck} disabled={loadingDeck}>
+                <button className="btn btn-secondary" onClick={openSavedDrawingsPicker} disabled={loadingDeck}>
                   Gespeicherte Zeichnungen
                 </button>
                 <label className="memory-upload">
@@ -753,6 +767,48 @@ export default function MemoryPage() {
           )}
         </section>
       </div>
+
+      {savedPickerOpen &&
+        createPortal(
+          <div className="memory-modal-overlay" onClick={() => setSavedPickerOpen(false)}>
+            <div className="memory-modal" role="dialog" aria-modal="true" aria-labelledby="memory-saved-title" onClick={(e) => e.stopPropagation()}>
+              <div className="memory-modal-head">
+                <h2 id="memory-saved-title">Gespeicherte Zeichnungen</h2>
+                <button className="memory-modal-close" aria-label="Schließen" onClick={() => setSavedPickerOpen(false)}>
+                  x
+                </button>
+              </div>
+              <div className="memory-modal-body">
+                {loadingSavedDrawings ? (
+                  <p className="memory-note">Lädt...</p>
+                ) : savedDrawingsError ? (
+                  <p className="memory-error">{savedDrawingsError}</p>
+                ) : (
+                  <div className="memory-saved-grid">
+                    {savedDrawings.map((drawing) => {
+                      const isDuplicate = editableDeck.some((card) => normalizeImageUrl(card.imageUrl) === normalizeImageUrl(drawing.thumbnail));
+                      const deckFull = editableDeck.length >= MAX_PAIRS;
+                      return (
+                        <button
+                          key={drawing.id}
+                          className={`memory-saved-card ${isDuplicate ? "is-added" : ""}`}
+                          onClick={() => addSavedDrawingToDeck(drawing)}
+                          disabled={isDuplicate || deckFull}
+                          aria-label={isDuplicate ? `${drawing.title} ist schon im Deck` : `${drawing.title} zum Deck hinzufügen`}
+                        >
+                          <img src={drawing.thumbnail} alt="" />
+                          <span>{drawing.title}</span>
+                          <strong>{isDuplicate ? "Drin" : "Hinzufügen"}</strong>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>,
+          portalEl
+        )}
     </div>
   );
 }
