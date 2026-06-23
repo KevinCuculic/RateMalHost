@@ -3,7 +3,7 @@ import { MongoClient, ServerApiVersion, ObjectId, Db, Collection } from 'mongodb
 import { User, IUser, CreateUserDTO, UserResponseDTO } from './user.ts';
 import { ISavedDrawing, SavedDrawingSummary } from './savedDrawing.ts';
 
-const uri = process.env.MONGODB_URI as string;
+const uri = process.env.MONGODB_URI;
 const databaseName = "RateMalDB";
 const usersCollectionName = "users";
 const drawingsCollectionName = "saved_drawings";
@@ -20,6 +20,10 @@ export async function connectDatabase(): Promise<void> {
   }
 
   try {
+    if (!uri || uri.includes("<db_username>") || uri.includes("<db_password>")) {
+      throw new Error("MONGODB_URI is missing or still contains placeholder values");
+    }
+
     client = new MongoClient(uri, {
       serverSelectionTimeoutMS: 5000,
       serverApi: {

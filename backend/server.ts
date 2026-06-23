@@ -710,17 +710,17 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
-  httpServer.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`Backend läuft auf Port ${PORT}`);
-  });
-
   try {
     await connectDatabase();
+    httpServer.listen(Number(PORT), "0.0.0.0", () => {
+      console.log(`Backend laeuft auf Port ${PORT}`);
+    });
   } catch (error) {
     console.error(
-      "!!Datenbank nicht erreichbar, Login/Registrierung nicht erreichbar!!",
+      "!!Datenbank nicht erreichbar. Bitte MONGODB_URI in Render pruefen und Atlas Network Access freigeben.!!",
       error
     );
+    process.exit(1);
   }
 }
 
