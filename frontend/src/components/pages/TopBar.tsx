@@ -20,6 +20,7 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
   const { isAuthenticated, username, logout, undoCanvas, clearCanvas, canUndoCanvas } = useContext(AppContext);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const isPaintByNumbers = selectedMode === "paint-by-numbers";
 
   const handleLogout = async () => {
     setIsAccountOpen(false);
@@ -100,6 +101,8 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
                 <PBNGame />
               </div>
             )}
+            {!isPaintByNumbers && (
+              <>
             <button
               type="button"
               className="btn btn-secondary"
@@ -118,7 +121,9 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
               Löschen
             </button>
             <SavedDrawingsGallery />
-            {selectedMode !== "guessing-game" && (
+              </>
+            )}
+            {selectedMode !== "guessing-game" && !isPaintByNumbers && (
               <button className="btn btn-secondary" onClick={onMemoryClick} aria-label="Memory Spiel öffnen">
                 Memory
               </button>

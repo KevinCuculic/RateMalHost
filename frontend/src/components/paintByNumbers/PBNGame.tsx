@@ -112,14 +112,14 @@ export default function PBNGame() {
   return (
     <>
       <button className="btn btn-secondary lm-trigger" onClick={() => setOpen(true)}>
-        Malen Nach Zahlen
+        Malen nach Zahlen
       </button>
 
       {open && createPortal(
         <div className="pbn-overlay" onClick={() => setOpen(false)}>
           <div className="pbn-window" onClick={(e) => e.stopPropagation()}>
             <div className="pbn-window__head">
-              <h2>Malen Nach Zahlen</h2>
+              <h2>Malen nach Zahlen</h2>
               <button className="pbn-close" aria-label="Schließen" onClick={() => setOpen(false)}>
                 ✕
               </button>

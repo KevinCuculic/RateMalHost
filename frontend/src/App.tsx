@@ -113,7 +113,7 @@ export default function App() {
         {view === 'home' ? (
           <StartPage onSelectMode={openMode} />
         ) : view === 'canvas' ? (
-          <CanvasPage />
+          <CanvasPage selectedMode={selectedMode} />
         ) : (
           <MemoryPage />
         )}

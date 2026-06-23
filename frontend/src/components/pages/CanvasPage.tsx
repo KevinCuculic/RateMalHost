@@ -5,10 +5,12 @@ import Canvas from '../canvas/Canvas';
 import ToolWheel from '../toolbar/ToolWheel';
 import { AppContext } from '../../context/AppContext';
 import { socket } from '../../socket/socket';
+import type { GameMode } from './StartPage';
 
-export default function CanvasPage() {
+export default function CanvasPage({ selectedMode }: { selectedMode?: GameMode | null }) {
   const { showGrid, guessingGame } = useContext(AppContext);
   const isGuessingDrawer = guessingGame && socket.id === guessingGame.drawMasterId;
+  const isPaintByNumbers = selectedMode === 'paint-by-numbers';
   
   // Trackt, ob der Sticker-Modus global aktiv ist
   const [stickerModeActive, setStickerModeActive] = useState(false);
@@ -44,14 +46,16 @@ export default function CanvasPage() {
           </section>
         )}
         {showGrid && <div className="grid-overlay" />} 
-        <Canvas />
+        <Canvas hideSaveButton={isPaintByNumbers} />
       </div>
 
       {/* Das ToolWheel übernimmt jetzt das gesamte Rendering an Ort und Stelle */}
-      <ToolWheel 
-        stickerModeActive={stickerModeActive} 
-        setStickerModeActive={setStickerModeActive} 
-      />
+      {!isPaintByNumbers && (
+        <ToolWheel
+          stickerModeActive={stickerModeActive}
+          setStickerModeActive={setStickerModeActive}
+        />
+      )}
     </div>
   );
 }

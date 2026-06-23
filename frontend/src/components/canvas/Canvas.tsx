@@ -16,7 +16,7 @@ import SaveDrawing from "./SaveDrawing";
 type Point = { x: number; y: number };
 
 
-export default function Canvas() {
+export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: boolean }) {
 
   const { currentColor, activeLobbyId, tool, activeShape, stickerSize, penWidth, showGrid, setCanvasControlActions } = useContext(AppContext);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -404,7 +404,7 @@ export default function Canvas() {
 
     <div style={{ position: 'relative', width: '100%', height: '100%', cursor: tool === 'shape' ? 'none' : 'crosshair' }}>
 
-    <SaveDrawing getThumbnail={makeThumbnail} />
+    {!hideSaveButton && <SaveDrawing getThumbnail={makeThumbnail} />}
 
     <canvas
       ref={canvasRef}
