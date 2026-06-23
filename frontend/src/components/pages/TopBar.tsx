@@ -100,9 +100,11 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
               </div>
             )}
             <SavedDrawingsGallery />
-            <button className="btn btn-secondary" onClick={onMemoryClick} aria-label="Memory Spiel oeffnen">
-              Memory
-            </button>
+            {selectedMode !== "guessing-game" && (
+              <button className="btn btn-secondary" onClick={onMemoryClick} aria-label="Memory Spiel oeffnen">
+                Memory
+              </button>
+            )}
           </>
         )}
         {view === "home" && (
