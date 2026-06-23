@@ -16,6 +16,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
+
 
 class PictureRequest(BaseModel):
     image: str   # base64-encoded string (with or without data-URL prefix)

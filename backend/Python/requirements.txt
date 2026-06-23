@@ -1,8 +1,5 @@
-"fastapi[standard]"
+fastapi[standard]
 scikit-learn
-opencv-python
+opencv-python-headless
 numpy
-torch 
-torchvision
-transformers 
 Pillow
