@@ -57,7 +57,7 @@ export default function SavedDrawingsGallery() {
       await deleteDrawing(id);
       setItems((prev) => prev.filter((d) => d.id !== id));
     } catch (e: unknown) {
-      setError(errorMessage(e, "Loeschen fehlgeschlagen"));
+      setError(errorMessage(e, "Löschen fehlgeschlagen"));
     }
   };
 
@@ -73,14 +73,14 @@ export default function SavedDrawingsGallery() {
             <div className="lm-window" onClick={(e) => e.stopPropagation()}>
               <div className="lm-head">
                 <h2>Meine Zeichnungen</h2>
-                <button className="lm-close" aria-label="Schliessen" onClick={() => setOpen(false)}>
+                <button className="lm-close" aria-label="Schließen" onClick={() => setOpen(false)}>
                   x
                 </button>
               </div>
               <div className="lm-body">
                 {error && <p className="lm-error">{error}</p>}
                 {busy ? (
-                  <p className="lm-empty">Laedt...</p>
+                  <p className="lm-empty">Lädt...</p>
                 ) : items.length === 0 ? (
                   <p className="lm-empty">Noch keine gespeicherten Zeichnungen.</p>
                 ) : (
@@ -93,8 +93,8 @@ export default function SavedDrawingsGallery() {
                           <button className="btn btn-secondary" onClick={() => handleLoad(d.id)}>
                             Laden
                           </button>
-                          <button className="btn" aria-label="Loeschen" onClick={() => handleDelete(d.id)}>
-                            Loeschen
+                          <button className="btn" aria-label="Löschen" onClick={() => handleDelete(d.id)}>
+                            Löschen
                           </button>
                         </div>
                       </div>

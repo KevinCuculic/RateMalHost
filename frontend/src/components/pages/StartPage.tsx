@@ -17,7 +17,7 @@ export default function StartPage({ onSelectMode }: StartPageProps) {
       <h1 style={{ fontSize: "32px", fontWeight: 800, marginBottom: "8px" }}>
         Jetzt loslegen
       </h1>
-      <p style={{ color: "#666", marginBottom: "40px" }}>Waehle einen Spielmodus.</p>
+      <p style={{ color: "#666", marginBottom: "40px" }}>Wähle einen Spielmodus.</p>
 
       <div
         style={{

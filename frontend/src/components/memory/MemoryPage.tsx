@@ -24,7 +24,7 @@ const MAX_PAIRS = 15;
 
 const DEFAULT_DECK: MemoryDeckCard[] = [
   { title: "Baum", imageUrl: "/sticker/tree.png" },
-  { title: "Blaetter", imageUrl: "/sticker/buntysmum-leaves.png" },
+  { title: "Blätter", imageUrl: "/sticker/buntysmum-leaves.png" },
   { title: "Kirsche", imageUrl: "/sticker/cherry.png" },
   { title: "Vogel", imageUrl: "/sticker/bird.png" },
   { title: "Panda", imageUrl: "/sticker/panda.png" },
@@ -151,11 +151,11 @@ export default function MemoryPage() {
       : remoteState.status === "lost"
         ? "Zuglimit erreicht. Starte ein neues Spiel."
       : canPlayRemote
-        ? "Du kannst eine Karte auswaehlen."
+        ? "Du kannst eine Karte auswählen."
         : "Du bist gerade nicht dran."
     : soloLost
       ? "Zuglimit erreicht. Starte ein neues Spiel."
-      : "Waehle zwei Karten mit gleichem Bild.";
+      : "Wähle zwei Karten mit gleichem Bild.";
 
   const turnLabel = useMemo(() => {
     if (mode === "solo") return "Du bist dran";
@@ -283,7 +283,7 @@ export default function MemoryPage() {
 
     if (!localFirstPick) {
       setLocalFirstPick(cardId);
-      setLiveMessage(`${picked.title} aufgedeckt. Waehle eine zweite Karte.`);
+      setLiveMessage(`${picked.title} aufgedeckt. Wähle eine zweite Karte.`);
       return;
     }
 
@@ -589,7 +589,7 @@ export default function MemoryPage() {
                 </button>
               </div>
 
-              <div className="memory-suggestions" aria-label="Suchvorschlaege">
+              <div className="memory-suggestions" aria-label="Suchvorschläge">
                 {suggestions.length === 0 ? (
                   <p className="memory-note">Suche nach Bildern und tippe passende Vorschläge an.</p>
                 ) : suggestions.map((card) => {
@@ -708,7 +708,7 @@ export default function MemoryPage() {
                         ? "Warte, bis du dran bist."
                         : mode === "multi" && remoteState?.locked
                           ? "Kurz warten."
-                          : "Karte auswaehlen"
+                          : "Karte auswählen"
                   }
                   aria-pressed={card.isFlipped || card.isMatched}
                   aria-label={
