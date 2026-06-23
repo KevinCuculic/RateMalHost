@@ -68,10 +68,11 @@ if (hasBuiltFrontend) {
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
 const BCRYPT_ROUNDS = 10;
+const emailSchema = z.string().trim().toLowerCase().email("Invalid email format");
 
 // Validation schemas
 const registerSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  email: emailSchema,
   password: z.string()
     .min(8, "Password must be at least 8 characters"),
     //.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
@@ -81,7 +82,7 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  email: emailSchema,
   password: z.string().min(1, "Password is required"),
 });
 
