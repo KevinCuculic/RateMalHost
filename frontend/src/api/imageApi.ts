@@ -1,6 +1,8 @@
+import { API_BASE } from "./config";
+
 export const searchImages = async (query: string) => {
   const res = await fetch(
-    `http://localhost:3000/search-images?q=${query}`
+    `${API_BASE}/search-images?q=${query}`
   );
 
   if (!res.ok) {

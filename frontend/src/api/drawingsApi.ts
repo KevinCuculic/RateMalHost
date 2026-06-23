@@ -1,4 +1,4 @@
-const BASE = "http://localhost:3000";
+import { API_BASE } from "./config";
 
 export type DrawingSummary = {
   id: string;
@@ -13,7 +13,7 @@ export const saveDrawing = async (payload: {
   title: string;
   thumbnail: string;
 }): Promise<DrawingSummary> => {
-  const res = await fetch(`${BASE}/api/drawings`, {
+  const res = await fetch(`${API_BASE}/api/drawings`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -24,13 +24,13 @@ export const saveDrawing = async (payload: {
 };
 
 export const listDrawings = async (): Promise<DrawingSummary[]> => {
-  const res = await fetch(`${BASE}/api/drawings`, { credentials: "include" });
+  const res = await fetch(`${API_BASE}/api/drawings`, { credentials: "include" });
   if (!res.ok) throw new Error("Laden fehlgeschlagen");
   return await res.json();
 };
 
 export const loadDrawing = async (id: string, lobbyId: string): Promise<void> => {
-  const res = await fetch(`${BASE}/api/drawings/${id}/load`, {
+  const res = await fetch(`${API_BASE}/api/drawings/${id}/load`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -40,7 +40,7 @@ export const loadDrawing = async (id: string, lobbyId: string): Promise<void> =>
 };
 
 export const deleteDrawing = async (id: string): Promise<void> => {
-  const res = await fetch(`${BASE}/api/drawings/${id}`, {
+  const res = await fetch(`${API_BASE}/api/drawings/${id}`, {
     method: "DELETE",
     credentials: "include",
   });

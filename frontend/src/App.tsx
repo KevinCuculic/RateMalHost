@@ -6,6 +6,7 @@ import TopBar from './components/pages/TopBar';
 import Auth from './components/auth/Auth';
 import { AppContext } from './context/AppContext';
 import MemoryPage from './components/memory/MemoryPage';
+import { API_BASE } from './api/config';
 
 function AuthModal({ onClose }: { onClose: () => void }) {
   const { refreshUser } = useContext(AppContext);
@@ -14,7 +15,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   async function handleSignIn({ email, password }: { email: string; password: string; remember: boolean }) {
     setError(null);
     try {
-      const res = await fetch('http://localhost:3000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -35,7 +36,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   async function handleRegister({ name, email, password }: { name: string; email: string; password: string }) {
     setError(null);
     try {
-      const res = await fetch('http://localhost:3000/api/auth/register', {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

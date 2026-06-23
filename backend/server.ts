@@ -3,6 +3,9 @@ import express, { Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { randomUUID } from "crypto";
+import { existsSync } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import bcryptjs from "bcryptjs";
@@ -31,12 +34,35 @@ dotenv.config();
 //test für api key:
 //console.log(process.env.PEXELS_API_KEY);
 const app = express();
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean)
+  : [];
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(imageRoutes);
 app.use("/", imageRoutes);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, "../frontend/dist");
+const hasBuiltFrontend = existsSync(frontendDistPath);
+
+if (hasBuiltFrontend) {
+  app.use(express.static(frontendDistPath));
+}
 
 // Environment variables
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -349,6 +375,12 @@ app.delete("/api/drawings/:id", requireAuth, async (req: Request, res: Response)
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+if (hasBuiltFrontend) {
+  app.get(/.*/, (_req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+}
 
 // remove socket from lobby handle delete and admin assignment
 function removeParticipant(socket: Socket, lobby: Lobby) {

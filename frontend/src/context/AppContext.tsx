@@ -9,6 +9,7 @@ import type { GuessingGame } from "../components/canvas/GuessingGame";
 //import io from "socket.io-client";
 import { socket } from "../socket/socket";
 import { searchImages as fetchImages } from "../api/imageApi";
+import { API_BASE } from "../api/config";
 import type { PBNPaletteEntry } from "../socket/PBNEvents";
 
 
@@ -66,7 +67,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshUser = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/auth/me", { credentials: "include" });
+      const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setUsername(data.username);
