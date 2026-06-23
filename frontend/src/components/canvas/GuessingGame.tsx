@@ -58,7 +58,7 @@ export default function GuessingGameCreator() {
                         Rate Spiel starten?
                     </p>
                     <p style={{ margin: "0 0 12px", color: "#4b5563", fontSize: "14px", lineHeight: 1.35 }}>
-                        Eine Person bekommt gleich einen Zeichenauftrag. Alle anderen raten mit Auswahlmoeglichkeiten.
+                        Eine Person bekommt gleich einen Zeichenauftrag. Alle anderen raten mit Auswahlmöglichkeiten.
                     </p>
                     <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                         <button

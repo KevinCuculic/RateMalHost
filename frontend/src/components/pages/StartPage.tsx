@@ -90,7 +90,7 @@ export default function StartPage({ onSelectMode }: StartPageProps) {
           <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#92400e", marginBottom: "8px" }}>
             Malen nach Zahlen
           </h3>
-          <p style={{ color: "#b45309" }}>Faerbe ein Bild Feld fuer Feld nach Zahlen.</p>
+          <p style={{ color: "#b45309" }}>Färbe ein Bild Feld für Feld nach Zahlen.</p>
         </div>
 
         <div

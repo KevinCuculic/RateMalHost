@@ -44,8 +44,8 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "1 1 220px" }}>
         {view !== "home" && (
-          <button onClick={onBack} className="btn" aria-label="Zur Startseite zurueck" style={{ padding: "8px 15px", marginRight: "10px" }}>
-            Zurueck
+          <button onClick={onBack} className="btn" aria-label="Zur Startseite zurück" style={{ padding: "8px 15px", marginRight: "10px" }}>
+            Zurück
           </button>
         )}
         <div
@@ -101,7 +101,7 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
             )}
             <SavedDrawingsGallery />
             {selectedMode !== "guessing-game" && (
-              <button className="btn btn-secondary" onClick={onMemoryClick} aria-label="Memory Spiel oeffnen">
+              <button className="btn btn-secondary" onClick={onMemoryClick} aria-label="Memory Spiel öffnen">
                 Memory
               </button>
             )}
@@ -115,7 +115,7 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
             <button
               type="button"
               className="btn btn-secondary"
-              aria-label={`Account-Menue fuer ${username}`}
+              aria-label={`Account-Menü für ${username}`}
               aria-expanded={isAccountOpen}
               onClick={() => setIsAccountOpen((open) => !open)}
             >

@@ -183,7 +183,7 @@ export default function MemoryPage() {
 
   const startSolo = (nextDeck = selectedPlayableDeck) => {
     if (nextDeck.length < pairCount) {
-      const message = `Fuer ${pairCount} Paare brauchst du ${pairCount} Bilder im Deck.`;
+      const message = `Für ${pairCount} Paare brauchst du ${pairCount} Bilder im Deck.`;
       setDeckMessage(message);
       setLiveMessage(message);
       return;
@@ -213,7 +213,7 @@ export default function MemoryPage() {
       setLiveMessage(message);
       return;
     }
-    applyDeck(playableDeck, `${playableDeck.length} Bilder als aktives Deck uebernommen.`);
+    applyDeck(playableDeck, `${playableDeck.length} Bilder als aktives Deck übernommen.`);
   };
 
   const addToDeck = (card: MemoryDeckCard) => {
@@ -230,7 +230,7 @@ export default function MemoryPage() {
       return;
     }
     setEditableDeck((current) => [...current, { ...card, key: makeId("deck-add") }]);
-    setDeckMessage(`${card.title} zum Deck hinzugefuegt.`);
+    setDeckMessage(`${card.title} zum Deck hinzugefügt.`);
   };
 
   const removeFromDeck = (key: string) => {
@@ -253,7 +253,7 @@ export default function MemoryPage() {
     }
     if (!deckReady) {
       const message = playableDeck.length < pairCount
-        ? `Fuer ${pairCount} Paare brauchst du ${pairCount} Bilder im Deck.`
+        ? `Für ${pairCount} Paare brauchst du ${pairCount} Bilder im Deck.`
         : "Ein Deck braucht mindestens zwei Bilder.";
       setRemoteError(message);
       setLiveMessage(message);
@@ -341,7 +341,7 @@ export default function MemoryPage() {
       return;
     }
     if (!activeLobbyId || remoteState?.locked || remoteState?.currentPlayerId !== socket.id) return;
-    setLiveMessage(`${card.title} ausgewaehlt.`);
+    setLiveMessage(`${card.title} ausgewählt.`);
     flipMemoryCard(activeLobbyId, card.id);
   };
 
@@ -381,8 +381,8 @@ export default function MemoryPage() {
       }
       setSuggestions(nextSuggestions);
       setDeckPanel("search");
-      setDeckMessage(`${nextSuggestions.length} Vorschlaege gefunden. Waehle nur passende Bilder aus.`);
-      setLiveMessage(`${nextSuggestions.length} Vorschlaege gefunden.`);
+      setDeckMessage(`${nextSuggestions.length} Vorschläge gefunden. Wähle nur passende Bilder aus.`);
+      setLiveMessage(`${nextSuggestions.length} Vorschläge gefunden.`);
     } catch {
       const message = "Bildersuche konnte nicht geladen werden.";
       setDeckMessage(message);
@@ -472,7 +472,7 @@ export default function MemoryPage() {
         <aside className="memory-panel" aria-labelledby="memory-deck-title">
           <h2 id="memory-deck-title">Decks</h2>
           <p className="memory-help">
-            Stelle dein Deck selbst zusammen. Suche liefert nur Vorschlaege; uebernimm nur Bilder, die wirklich passen.
+            Stelle dein Deck selbst zusammen. Suche liefert nur Vorschläge; übernimm nur Bilder, die wirklich passen.
           </p>
 
           <div className="memory-editor-summary" aria-live="polite">
@@ -495,14 +495,14 @@ export default function MemoryPage() {
               Zuglimit
               <select value={moveLimitMode} onChange={(e) => setMoveLimitMode(e.target.value as typeof moveLimitMode)}>
                 <option value="unlimited">Unendlich</option>
-                <option value="20">20 Zuege</option>
-                <option value="50">50 Zuege</option>
+                <option value="20">20 Züge</option>
+                <option value="50">50 Züge</option>
                 <option value="custom">Eigenes Limit</option>
               </select>
             </label>
             {moveLimitMode === "custom" && (
               <label>
-                Max. Zuege
+                Max. Züge
                 <input
                   type="number"
                   min={1}
@@ -516,7 +516,7 @@ export default function MemoryPage() {
 
           {playableDeck.length < pairCount && (
             <p className="memory-note" role="status">
-              Fuer {pairCount} Paare brauchst du {pairCount} Bilder im Deck.
+              Für {pairCount} Paare brauchst du {pairCount} Bilder im Deck.
             </p>
           )}
 
@@ -528,7 +528,7 @@ export default function MemoryPage() {
               Suchen
             </button>
             <button className={deckPanel === "add" ? "is-active" : ""} role="tab" aria-selected={deckPanel === "add"} onClick={() => setDeckPanel("add")}>
-              Hinzufuegen
+              Hinzufügen
             </button>
           </div>
 
@@ -574,7 +574,7 @@ export default function MemoryPage() {
           {deckPanel === "search" && (
             <div className="memory-panel-section" role="tabpanel">
               <div className="memory-search">
-                <label className="sr-only" htmlFor="memory-search-input">Bilder fuer Memory suchen</label>
+                <label className="sr-only" htmlFor="memory-search-input">Bilder für Memory suchen</label>
                 <input
                   id="memory-search-input"
                   value={query}
@@ -591,7 +591,7 @@ export default function MemoryPage() {
 
               <div className="memory-suggestions" aria-label="Suchvorschlaege">
                 {suggestions.length === 0 ? (
-                  <p className="memory-note">Suche nach Bildern und tippe passende Vorschlaege an.</p>
+                  <p className="memory-note">Suche nach Bildern und tippe passende Vorschläge an.</p>
                 ) : suggestions.map((card) => {
                   const isDuplicate = editableDeck.some((deckCard) => normalizeImageUrl(deckCard.imageUrl) === normalizeImageUrl(card.imageUrl));
                   return (
@@ -600,7 +600,7 @@ export default function MemoryPage() {
                       className={`memory-suggestion ${isDuplicate ? "is-added" : ""}`}
                       onClick={() => addToDeck(card)}
                       disabled={editableDeck.length >= MAX_PAIRS || isDuplicate}
-                      aria-label={isDuplicate ? `${card.title} ist schon im Deck` : `${card.title} zum Deck hinzufuegen`}
+                      aria-label={isDuplicate ? `${card.title} ist schon im Deck` : `${card.title} zum Deck hinzufügen`}
                     >
                       <img src={card.imageUrl} alt="" />
                       <span>{card.title}</span>
@@ -623,7 +623,7 @@ export default function MemoryPage() {
                 </button>
                 <label className="memory-upload">
                   Bilder hochladen
-                  <input aria-label="Eigene Bilder fuer Memory hochladen" type="file" accept="image/*" multiple hidden onChange={(e) => handleUpload(e.target.files)} />
+                  <input aria-label="Eigene Bilder für Memory hochladen" type="file" accept="image/*" multiple hidden onChange={(e) => handleUpload(e.target.files)} />
                 </label>
               </div>
 
@@ -637,7 +637,7 @@ export default function MemoryPage() {
                   <input value={manualUrl} onChange={(e) => setManualUrl(e.target.value)} placeholder="https://..." />
                 </label>
                 <button className="btn btn-secondary" onClick={addManualImage} disabled={!manualUrl.trim() || editableDeck.length >= MAX_PAIRS}>
-                  Bild hinzufuegen
+                  Bild hinzufügen
                 </button>
               </div>
             </div>
@@ -646,13 +646,13 @@ export default function MemoryPage() {
           {deckMessage && <p className="memory-note" role="status">{deckMessage}</p>}
           {!isAuthenticated && (
             <p className="memory-note">
-              Fuer gespeicherte Zeichnungen musst du eingeloggt sein. Bilder hochladen funktioniert auch ohne Login.
+              Für gespeicherte Zeichnungen musst du eingeloggt sein. Bilder hochladen funktioniert auch ohne Login.
             </p>
           )}
 
           <div className="memory-actions">
             <button className="btn btn-secondary" onClick={useEditorDeck} disabled={!deckReady}>
-              Deck uebernehmen
+              Deck übernehmen
             </button>
             <button className="btn btn-secondary" onClick={() => startSolo(selectedPlayableDeck)} disabled={!deckReady}>
               Solo mit Deck starten
@@ -677,7 +677,7 @@ export default function MemoryPage() {
             <span>{matchedPairs}/{totalPairs} Paare</span>
             <span>
               {mode === "solo" ? localMoves : remoteState?.moves ?? 0}
-              {moveLimitLabel === null ? "" : `/${moveLimitLabel}`} Zuege
+              {moveLimitLabel === null ? "" : `/${moveLimitLabel}`} Züge
             </span>
           </div>
           <p className="memory-hint" role="status">{selectionHint}</p>

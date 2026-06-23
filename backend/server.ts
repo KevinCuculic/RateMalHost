@@ -556,7 +556,7 @@ io.on("connection", (socket) => {
     }
 
     if (cleanDeck.length < pairCount) {
-      ack?.({ ok: false, error: `Fuer ${pairCount} Paare brauchst du ${pairCount} Bilder im Deck.` });
+      ack?.({ ok: false, error: `Für ${pairCount} Paare brauchst du ${pairCount} Bilder im Deck.` });
       return;
     }
 
@@ -724,11 +724,11 @@ async function startServer() {
   try {
     await connectDatabase();
     httpServer.listen(Number(PORT), "0.0.0.0", () => {
-      console.log(`Backend laeuft auf Port ${PORT}`);
+      console.log(`Backend läuft auf Port ${PORT}`);
     });
   } catch (error) {
     console.error(
-      "!!Datenbank nicht erreichbar. Bitte MONGODB_URI in Render pruefen und Atlas Network Access freigeben.!!",
+      "!!Datenbank nicht erreichbar. Bitte MONGODB_URI in Render prüfen und Atlas Network Access freigeben.!!",
       error
     );
     process.exit(1);
