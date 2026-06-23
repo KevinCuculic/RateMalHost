@@ -114,4 +114,40 @@ router.get("/search-images", async (req, res) => {
   }
 });
 
+router.get("/image-data-url", async (req, res) => {
+  const rawUrl = String(req.query.url ?? "");
+
+  try {
+    const parsed = new URL(rawUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      res.status(400).json({ error: "Invalid image URL" });
+      return;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+    ) {
+      res.status(400).json({ error: "Invalid image host" });
+      return;
+    }
+
+    const response = await fetch(parsed);
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!response.ok || !contentType.startsWith("image/")) {
+      res.status(502).json({ error: "Image could not be loaded" });
+      return;
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.json({ dataUrl: `data:${contentType};base64,${buffer.toString("base64")}` });
+  } catch {
+    res.status(400).json({ error: "Invalid image URL" });
+  }
+});
+
 export default router;

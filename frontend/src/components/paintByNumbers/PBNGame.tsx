@@ -2,6 +2,8 @@ import { useContext, useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import { createPortal } from "react-dom";
 import { AppContext } from "../../context/AppContext";
+import { listDrawings, type DrawingSummary } from "../../api/drawingsApi";
+import { imageUrlToDataUrl, searchImages } from "../../api/imageApi";
 import {
   emitGeneratePBN,
   onPBNReady,
@@ -18,6 +20,8 @@ import "./PBNGame.css";
 
 // Restiction to 1200px img size for PBN pipeline speedup
 const MAX_DIM = 1200;
+type SourceTab = "upload" | "saved" | "search";
+type SearchImage = { id: number | string; url: string; alt: string };
 
 //loads pic downscales and returns as jpeg
 function downscaleImage(file: File): Promise<string> {
@@ -49,14 +53,19 @@ function downscaleImage(file: File): Promise<string> {
 }
 
 export default function PBNGame() {
-  const { activeLobbyId, currentColor, setCurrentColor, pbnPalette, setPbnPalette } =
+  const { activeLobbyId, currentColor, setCurrentColor, pbnPalette, setPbnPalette, isAuthenticated } =
     useContext(AppContext);
 
   const [open, setOpen] = useState(false);
+  const [sourceTab, setSourceTab] = useState<SourceTab>("upload");
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [savedDrawings, setSavedDrawings] = useState<DrawingSummary[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchImage[]>([]);
   const [difficulty, setDifficulty] = useState(5);
   const [loading, setLoading] = useState(false);
+  const [sourceLoading, setSourceLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string | null>(null);
   const [portalEl] = useState(() => document.createElement("div"));
@@ -102,6 +111,67 @@ export default function PBNGame() {
     }
   };
 
+  const loadSavedDrawings = async () => {
+    if (!isAuthenticated) {
+      setError("Melde dich an, um gespeicherte Zeichnungen zu nutzen.");
+      return;
+    }
+
+    setSourceLoading(true);
+    setError(null);
+    try {
+      const drawings = await listDrawings();
+      setSavedDrawings(drawings);
+      if (drawings.length === 0) setError("Noch keine gespeicherten Zeichnungen gefunden.");
+    } catch {
+      setError("Gespeicherte Zeichnungen konnten nicht geladen werden.");
+    } finally {
+      setSourceLoading(false);
+    }
+  };
+
+  const changeSourceTab = (tab: SourceTab) => {
+    setSourceTab(tab);
+    setError(null);
+    if (tab === "saved" && savedDrawings.length === 0) void loadSavedDrawings();
+  };
+
+  const handleSavedDrawingSelect = (drawing: DrawingSummary) => {
+    setImageDataUrl(drawing.thumbnail);
+    setFileName(drawing.title || "Gespeicherte Zeichnung");
+    setError(null);
+  };
+
+  const handleSearch = async () => {
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    setSourceLoading(true);
+    setError(null);
+    try {
+      const results = await searchImages(query);
+      setSearchResults(results);
+      if (results.length === 0) setError("Keine passenden Bilder gefunden.");
+    } catch {
+      setError("Bildersuche konnte nicht geladen werden.");
+    } finally {
+      setSourceLoading(false);
+    }
+  };
+
+  const handleSearchImageSelect = async (image: SearchImage) => {
+    setSourceLoading(true);
+    setError(null);
+    try {
+      setImageDataUrl(await imageUrlToDataUrl(image.url));
+      setFileName(image.alt || "Suchbild");
+    } catch {
+      setError("Dieses Bild konnte nicht vorbereitet werden.");
+    } finally {
+      setSourceLoading(false);
+    }
+  };
+
   const handleGenerate = () => {
     if (!activeLobbyId || !imageDataUrl) return;
     setError(null);
@@ -130,6 +200,19 @@ export default function PBNGame() {
               <section className="pbn-panel">
                 <h3>1 · Bild &amp; Schwierigkeit</h3>
 
+                <div className="pbn-source-tabs" aria-label="Bildquelle">
+                  <button className={sourceTab === "upload" ? "is-active" : ""} onClick={() => changeSourceTab("upload")} type="button">
+                    Hochladen
+                  </button>
+                  <button className={sourceTab === "saved" ? "is-active" : ""} onClick={() => changeSourceTab("saved")} type="button">
+                    Gespeichert
+                  </button>
+                  <button className={sourceTab === "search" ? "is-active" : ""} onClick={() => changeSourceTab("search")} type="button">
+                    Suchen
+                  </button>
+                </div>
+
+                {sourceTab === "upload" && (
                 <label className="pbn-upload">
                   <input type="file" accept="image/*" hidden onChange={handleFileChange} />
                   {imageDataUrl ? (
@@ -138,6 +221,69 @@ export default function PBNGame() {
                     <span>Bild auswählen</span>
                   )}
                 </label>
+                )}
+
+                {sourceTab === "saved" && (
+                  <div className="pbn-picker">
+                    {!isAuthenticated ? (
+                      <p className="pbn-placeholder">Melde dich an, um gespeicherte Zeichnungen zu nutzen.</p>
+                    ) : sourceLoading ? (
+                      <p className="pbn-placeholder">Lädt...</p>
+                    ) : savedDrawings.length === 0 ? (
+                      <p className="pbn-placeholder">Noch keine gespeicherten Zeichnungen.</p>
+                    ) : (
+                      <div className="pbn-source-grid">
+                        {savedDrawings.map((drawing) => (
+                          <button key={drawing.id} type="button" className="pbn-source-card" onClick={() => handleSavedDrawingSelect(drawing)}>
+                            <img src={drawing.thumbnail} alt={drawing.title} />
+                            <span>{drawing.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {sourceTab === "search" && (
+                  <div className="pbn-picker">
+                    <div className="pbn-search-row">
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void handleSearch();
+                          }
+                        }}
+                        placeholder="Bild suchen"
+                      />
+                      <button className="btn btn-secondary" type="button" onClick={handleSearch} disabled={sourceLoading || !searchQuery.trim()}>
+                        Suchen
+                      </button>
+                    </div>
+                    {sourceLoading ? (
+                      <p className="pbn-placeholder">Lädt...</p>
+                    ) : searchResults.length === 0 ? (
+                      <p className="pbn-placeholder">Suche ein Bild als Vorlage.</p>
+                    ) : (
+                      <div className="pbn-source-grid">
+                        {searchResults.map((image) => (
+                          <button key={image.id} type="button" className="pbn-source-card" onClick={() => handleSearchImageSelect(image)}>
+                            <img src={image.url} alt={image.alt} />
+                            <span>{image.alt || "Bild"}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {sourceTab !== "upload" && imageDataUrl && (
+                  <div className="pbn-selected-preview">
+                    <img src={imageDataUrl} alt="Ausgewählte Vorlage" />
+                  </div>
+                )}
                 {fileName && <p className="pbn-filename">{fileName}</p>}
 
                 <label className="pbn-difficulty">
