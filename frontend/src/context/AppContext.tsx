@@ -64,6 +64,11 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // Active PBN palette; set by PBNGame on `pbn-ready`, cleared when leaving PBN mode.
   const [pbnPalette, setPbnPalette] = useState<PBNPaletteEntry[] | null>(null);
+  const [canvasActions, setCanvasActions] = useState({
+    canUndo: false,
+    undo: () => {},
+    clear: () => {},
+  });
 
   const refreshUser = async () => {
     try {
@@ -182,6 +187,10 @@ const searchImages = async (query: string) => {
       setSelectedImage,
       pbnPalette,
       setPbnPalette,
+      canUndoCanvas: canvasActions.canUndo,
+      undoCanvas: canvasActions.undo,
+      clearCanvas: canvasActions.clear,
+      setCanvasControlActions: setCanvasActions,
 
       }}>
   

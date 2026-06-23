@@ -3,9 +3,9 @@
 //
 //
 //--------------------------------
-import { useRef, useEffect, useContext, useState } from "react";
+import { useRef, useEffect, useContext, useState, useCallback } from "react";
 import { AppContext } from "../../context/AppContext";
-import { emitDraw, onDraw, offDraw, onCanvasSync, offCanvasSync, type DrawEvent } from "../../socket/drawingEvents";
+import { emitCanvasClear, emitCanvasUndo, emitDraw, onDraw, offDraw, onCanvasSync, offCanvasSync, type DrawEvent } from "../../socket/drawingEvents";
 import { onPBNReady, offPBNReady, toPngDataUrl, type PBNResult } from "../../socket/PBNEvents";
 import { renderSticker} from "../../utils/shapeHelpers";
 import { STICKER_CATEGORIES } from "../sticker/stickers";
@@ -18,7 +18,7 @@ type Point = { x: number; y: number };
 
 export default function Canvas() {
 
-  const { currentColor, activeLobbyId, tool, activeShape, stickerSize, penWidth, showGrid } = useContext(AppContext);
+  const { currentColor, activeLobbyId, tool, activeShape, stickerSize, penWidth, showGrid, setCanvasControlActions } = useContext(AppContext);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
@@ -26,13 +26,17 @@ export default function Canvas() {
   // Resize (z.B. Browser-Zoom) verlustfrei neu aufgebaut werden kann.
   const historyRef = useRef<DrawEvent[]>([]);
   const pbnImageRef = useRef<HTMLImageElement | null>(null);
+  const repaintRef = useRef<() => void>(() => {});
 
   const [previewPos, setPreviewPos] = useState<Point | null>(null);
   const [customStickers, setCustomStickers] = useState<Sticker[]>([]);
+  const [historyVersion, setHistoryVersion] = useState(0);
   // Helpfunction, gets stickers as flat list
   //const allStickers = Object.values(STICKER_CATEGORIES).flat();
   const allStickers = [...Object.values(STICKER_CATEGORIES).flat(), ...customStickers];
   const currentStickerObj = allStickers.find(s => s.id === activeShape);
+
+  const markHistoryChanged = () => setHistoryVersion((version) => version + 1);
 
   
 
@@ -87,6 +91,7 @@ export default function Canvas() {
     };
     renderEvent(ctx, eventData);
     historyRef.current.push(eventData);
+    markHistoryChanged();
     emitDraw({lobbyId: activeLobbyId, data: eventData});
   };
 
@@ -160,6 +165,7 @@ export default function Canvas() {
       
       renderEvent(ctx, eventData);
       historyRef.current.push(eventData);
+      markHistoryChanged();
       emitDraw({ lobbyId: activeLobbyId, canvasWidth: canvasRef.current!.width, data: eventData });
       return;
     }
@@ -187,6 +193,7 @@ export default function Canvas() {
 
     renderEvent(ctx, eventData);
     historyRef.current.push(eventData);
+    markHistoryChanged();
     emitDraw({ lobbyId: activeLobbyId, canvasWidth: canvasRef.current!.width, data: eventData });
     lastPoint.current = p;
   };
@@ -200,7 +207,7 @@ export default function Canvas() {
   const makeThumbnail = (): string | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
-    const maxW = 320;
+    const maxW = 900;
     const scale = Math.min(1, maxW / canvas.width);
     const off = document.createElement("canvas");
     off.width = Math.max(1, Math.round(canvas.width * scale));
@@ -209,9 +216,72 @@ export default function Canvas() {
     if (!octx) return null;
     octx.fillStyle = "#ffffff";
     octx.fillRect(0, 0, off.width, off.height);
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = "high";
     octx.drawImage(canvas, 0, 0, off.width, off.height);
-    return off.toDataURL("image/jpeg", 0.7);
+    return off.toDataURL("image/jpeg", 0.92);
   };
+
+  const clearLocalCanvas = useCallback(() => {
+    historyRef.current = [];
+    pbnImageRef.current = null;
+    repaintRef.current();
+    markHistoryChanged();
+  }, []);
+
+  const clearCanvas = useCallback(() => {
+    if (activeLobbyId) {
+      emitCanvasClear(activeLobbyId);
+      return;
+    }
+    clearLocalCanvas();
+  }, [activeLobbyId, clearLocalCanvas]);
+
+  const undoCanvas = useCallback(() => {
+    if (!historyRef.current.length) return;
+
+    if (activeLobbyId) {
+      emitCanvasUndo(activeLobbyId);
+      return;
+    }
+
+    historyRef.current = historyRef.current.slice(0, -1);
+    repaintRef.current();
+    markHistoryChanged();
+  }, [activeLobbyId]);
+
+  useEffect(() => {
+    setCanvasControlActions?.({
+      canUndo: historyRef.current.length > 0,
+      undo: undoCanvas,
+      clear: clearCanvas,
+    });
+
+    return () => {
+      setCanvasControlActions?.({
+        canUndo: false,
+        undo: () => {},
+        clear: () => {},
+      });
+    };
+  }, [clearCanvas, historyVersion, setCanvasControlActions, undoCanvas]);
+
+  useEffect(() => {
+    const handleUndoShortcut = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isTyping =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable;
+
+      if (isTyping || (!e.ctrlKey && !e.metaKey) || e.key.toLowerCase() !== "z") return;
+      e.preventDefault();
+      undoCanvas();
+    };
+
+    window.addEventListener("keydown", handleUndoShortcut);
+    return () => window.removeEventListener("keydown", handleUndoShortcut);
+  }, [undoCanvas]);
 
 
 
@@ -264,6 +334,8 @@ export default function Canvas() {
       const h = img.height * scale;
       const x = (canvas.width - w) / 2;
       const y = (canvas.height - h) / 2;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, x, y, w, h);
     };
 
@@ -273,6 +345,7 @@ export default function Canvas() {
       if (pbnImageRef.current) drawPbn(pbnImageRef.current);
       historyRef.current.forEach((ev) => renderEvent(ctx, ev));
     };
+    repaintRef.current = repaint;
 
     // Resize Observer damit Canvas bei Größenänderung mitgeht.
     // Hinweis: canvas.width/height neu zu setzen LEERT das Bitmap, deshalb
@@ -290,12 +363,15 @@ export default function Canvas() {
     onDraw((data) => {
       historyRef.current.push(data);
       renderEvent(ctx, data);
+      markHistoryChanged();
     });
 
     // HISTORY LADEN
     onCanvasSync((history) => {
       historyRef.current = [...history];
+      pbnImageRef.current = null;
       repaint();
+      markHistoryChanged();
     });
 
     // PAINT-BY-NUMBERS Vorlage auf den Canvas legen
@@ -305,6 +381,7 @@ export default function Canvas() {
         pbnImageRef.current = img;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawPbn(img);
+        markHistoryChanged();
       };
       img.src = toPngDataUrl(result.pbn_template);
     };

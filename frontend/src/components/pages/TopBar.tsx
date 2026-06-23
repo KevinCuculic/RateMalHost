@@ -17,8 +17,9 @@ interface TopBarProps {
 }
 
 export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMemoryClick }: TopBarProps) {
-  const { isAuthenticated, username, logout } = useContext(AppContext);
+  const { isAuthenticated, username, logout, undoCanvas, clearCanvas, canUndoCanvas } = useContext(AppContext);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
 
   const handleLogout = async () => {
     setIsAccountOpen(false);
@@ -99,6 +100,23 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
                 <PBNGame />
               </div>
             )}
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={undoCanvas}
+              disabled={!canUndoCanvas}
+              aria-label="Letzten Zeichenschritt rückgängig machen"
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setIsClearConfirmOpen(true)}
+              aria-label="Canvas löschen"
+            >
+              Löschen
+            </button>
             <SavedDrawingsGallery />
             {selectedMode !== "guessing-game" && (
               <button className="btn btn-secondary" onClick={onMemoryClick} aria-label="Memory Spiel öffnen">
@@ -166,6 +184,55 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
           </button>
         )}
       </nav>
+      {isClearConfirmOpen && (
+        <div
+          role="presentation"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            background: "rgba(15,23,42,0.28)",
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Canvas löschen bestätigen"
+            style={{
+              width: "min(380px, 100%)",
+              padding: "20px",
+              background: "#fff",
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: "8px",
+              boxShadow: "0 22px 48px rgba(15,23,42,0.24)",
+            }}
+          >
+            <h2 style={{ margin: "0 0 8px", fontSize: "20px", color: "#111827" }}>Canvas löschen?</h2>
+            <p style={{ margin: "0 0 18px", color: "#4b5563", lineHeight: 1.45 }}>
+              Alles auf dem Canvas wird unwiderruflich gelöscht.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsClearConfirmOpen(false)}>
+                Abbrechen
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  clearCanvas?.();
+                  setIsClearConfirmOpen(false);
+                }}
+              >
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

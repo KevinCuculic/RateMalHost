@@ -270,6 +270,31 @@ type LineDrawEvent ={
 // Zeichen-History pro Lobby (damit neue Joiner den aktuellen Canvas sehen)
 const lobbyHistory = new Map<string, DrawEvent[]>();
 
+function undoLastCanvasAction(history: DrawEvent[]) {
+  const next = [...history];
+  const last = next.pop();
+  if (!last) return next;
+
+  if (last.type !== "line") return next;
+
+  let current = last;
+  while (next.length > 0) {
+    const previous = next[next.length - 1];
+    if (
+      previous.type !== "line" ||
+      previous.color !== current.color ||
+      previous.width !== current.width ||
+      previous.to.x !== current.from.x ||
+      previous.to.y !== current.from.y
+    ) {
+      break;
+    }
+    current = next.pop() as DrawEvent & { type: "line" };
+  }
+
+  return next;
+}
+
 // for mirrored drawing option
 const lobbyMirrorMode = new Map<string, boolean>();
 
@@ -630,6 +655,24 @@ io.on("connection", (socket) => {
   }
   })
 
+  socket.on("canvas-undo", (lobbyId: string) => {
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby || !lobby.participants.has(socket.id)) return;
+
+    const history = lobbyHistory.get(lobbyId) ?? [];
+    const next = undoLastCanvasAction(history);
+    lobbyHistory.set(lobbyId, next);
+    io.to(lobbyId).emit("canvas-sync", next);
+  });
+
+  socket.on("canvas-clear", (lobbyId: string) => {
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby || !lobby.participants.has(socket.id)) return;
+
+    lobbyHistory.set(lobbyId, []);
+    io.to(lobbyId).emit("canvas-sync", []);
+  });
+
 
   //-------------------------------------
   //for the group: 
@@ -648,21 +691,22 @@ io.on("connection", (socket) => {
     if (!lobbyId || !image) return;
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/processPicture", {
+      const pbnServiceUrl = (process.env.PBN_SERVICE_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+      const response = await fetch(`${pbnServiceUrl}/processPicture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image, difficulty: difficulty ?? 5 }),
       });
 
       if (!response.ok) {
-        socket.emit("pbn-error", { message: "PBN generation failed" });
+        socket.emit("pbn-error", { message: "Malen nach Zahlen konnte nicht erstellt werden." });
         return;
       }
 
       const result = await response.json();
       io.to(lobbyId).emit("pbn-ready", result);
     } catch {
-      socket.emit("pbn-error", { message: "Could not reach PBN service" });
+      socket.emit("pbn-error", { message: "Malen nach Zahlen Dienst ist nicht erreichbar." });
     }
   });
 

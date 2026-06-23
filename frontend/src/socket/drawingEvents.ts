@@ -52,6 +52,14 @@ export const emitDraw = (payload: DrawPayload) => {
   socket.emit("draw", payload);
 };
 
+export const emitCanvasUndo = (lobbyId: string) => {
+  socket.emit("canvas-undo", lobbyId);
+};
+
+export const emitCanvasClear = (lobbyId: string) => {
+  socket.emit("canvas-clear", lobbyId);
+};
+
 /**
  * Registers a listener for incoming draw events
  * CallBack is triggerd  whenever another user draws

@@ -21,6 +21,7 @@ type ShapeDrawEvent ={
   x: number;
   y:number;
   color:string;
+  size?: number;
 };
 
 

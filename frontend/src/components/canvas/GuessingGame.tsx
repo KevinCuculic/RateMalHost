@@ -81,12 +81,7 @@ export default function GuessingGameCreator() {
         </div>
     )}
 
-    if(socket.id === guessingGame.drawMasterId) { return (
-        <div>
-            <h2>Zeichne: </h2>
-            <p>{guessingGame.drawPrompt}</p>
-        </div>
-    )} else { return (
+    if(socket.id === guessingGame.drawMasterId) { return null } else { return (
         <div>
             <div>
                 {guessingGame.answerOptions.map((answer: string) => (
