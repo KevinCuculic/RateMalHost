@@ -81,6 +81,18 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   };
 
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      setUsername(getOrCreateGuestName());
+      setIsAuthenticated(false);
+    }
+  };
+
   useEffect(() => {
     refreshUser();
   }, []);
@@ -147,6 +159,7 @@ const searchImages = async (query: string) => {
       username,
       isAuthenticated,
       refreshUser,
+      logout,
       changePrompt,
       groupPrompt, 
       requestGroupPrompt,

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import LobbyManager from "../lobby/LobbyManager";
 import LobbyParticipants from "../lobby/LobbyParticipants";
 import Prompts from "../canvas/Prompts";
@@ -17,7 +17,13 @@ interface TopBarProps {
 }
 
 export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMemoryClick }: TopBarProps) {
-  const { isAuthenticated, username } = useContext(AppContext);
+  const { isAuthenticated, username, logout } = useContext(AppContext);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setIsAccountOpen(false);
+    await logout();
+  };
 
   return (
     <header
@@ -103,13 +109,42 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
           <button className="btn btn-secondary">?</button>
         )}
         {isAuthenticated ? (
-          <span
-            className="btn btn-secondary"
-            aria-label={`Angemeldet als ${username}`}
-            style={{ cursor: "default" }}
-          >
-            {username}
-          </span>
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              aria-label={`Account-Menue fuer ${username}`}
+              aria-expanded={isAccountOpen}
+              onClick={() => setIsAccountOpen((open) => !open)}
+            >
+              {username}
+            </button>
+            {isAccountOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: "calc(100% + 8px)",
+                  minWidth: "160px",
+                  padding: "8px",
+                  background: "#fff",
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: "8px",
+                  boxShadow: "0 12px 28px rgba(0,0,0,0.16)",
+                  zIndex: 1200,
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleLogout}
+                  style={{ width: "100%", justifyContent: "center" }}
+                >
+                  Abmelden
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <button
             onClick={onLoginClick}

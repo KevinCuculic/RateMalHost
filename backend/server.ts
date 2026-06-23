@@ -212,6 +212,17 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
 });
 
 
+app.post('/api/auth/logout', (_req: Request, res: Response) => {
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+
+  res.status(200).json({ message: "Logout successful" });
+});
+
+
 // returns currently authenticated user based on token cookie
 
 app.get('/api/auth/me', async (req: Request, res: Response) => {
