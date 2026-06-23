@@ -692,6 +692,7 @@ io.on("connection", (socket) => {
 
     try {
       const pbnServiceUrl = (process.env.PBN_SERVICE_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+      console.log("[PBN] Requesting paint-by-numbers service:", pbnServiceUrl);
       const response = await fetch(`${pbnServiceUrl}/processPicture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -699,13 +700,16 @@ io.on("connection", (socket) => {
       });
 
       if (!response.ok) {
+        const errorBody = await response.text().catch(() => "");
+        console.error("[PBN] Service failed:", response.status, errorBody.slice(0, 500));
         socket.emit("pbn-error", { message: "Malen nach Zahlen konnte nicht erstellt werden." });
         return;
       }
 
       const result = await response.json();
       io.to(lobbyId).emit("pbn-ready", result);
-    } catch {
+    } catch (error) {
+      console.error("[PBN] Service unreachable:", error);
       socket.emit("pbn-error", { message: "Malen nach Zahlen Dienst ist nicht erreichbar." });
     }
   });
