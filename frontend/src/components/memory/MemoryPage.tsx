@@ -30,8 +30,15 @@ const DEFAULT_DECK: MemoryDeckCard[] = [
   { title: "Vogel", imageUrl: "/sticker/bird.png" },
   { title: "Panda", imageUrl: "/sticker/panda.png" },
   { title: "Blume", imageUrl: "/sticker/4383982.png" },
-  { title: "Blume 2", imageUrl: "/sticker/4645828.png" },
-  { title: "Collage", imageUrl: "/sticker/photo.avif" },
+  { title: "Palme", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f334/512.png" },
+  { title: "Rose", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f339/512.png" },
+  { title: "Kaktus", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f335/512.png" },
+  { title: "Pilz", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f344/512.png" },
+  { title: "Regenbogen", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f308/512.png" },
+  { title: "Fuchs", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f98a/512.png" },
+  { title: "Frosch", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f438/512.png" },
+  { title: "Einhorn", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f984/512.png" },
+  { title: "Biene", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f41d/512.png" },
 ];
 
 function makeId(prefix: string): string {
