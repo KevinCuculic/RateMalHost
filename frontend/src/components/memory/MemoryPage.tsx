@@ -22,6 +22,7 @@ type EditableDeckCard = MemoryDeckCard & { key: string };
 type LocalGameStatus = "playing" | "finished" | "lost";
 
 const MAX_PAIRS = 15;
+const DEFAULT_PAIR_COUNT = 8;
 
 const DEFAULT_DECK: MemoryDeckCard[] = [
   { title: "Baum", imageUrl: "/sticker/tree.png" },
@@ -39,6 +40,19 @@ const DEFAULT_DECK: MemoryDeckCard[] = [
   { title: "Frosch", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f438/512.png" },
   { title: "Einhorn", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f984/512.png" },
   { title: "Biene", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f41d/512.png" },
+];
+
+const DEFAULT_MEMORY_DECK = DEFAULT_DECK.slice(0, DEFAULT_PAIR_COUNT);
+
+const EXTRA_STICKER_CARDS: MemoryDeckCard[] = [
+  ...DEFAULT_DECK.slice(DEFAULT_PAIR_COUNT),
+  { title: "Pflanze", imageUrl: "/sticker/plant1.png" },
+  { title: "Stern", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/2b50/512.png" },
+  { title: "Herz", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/2764_fe0f/512.png" },
+  { title: "Sonne", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/2600_fe0f/512.png" },
+  { title: "Mond", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f319/512.png" },
+  { title: "Auto", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f697/512.png" },
+  { title: "Ball", imageUrl: "https://fonts.gstatic.com/s/e/notoemoji/latest/26bd/512.png" },
 ];
 
 function makeId(prefix: string): string {
@@ -75,7 +89,7 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-function makeLocalCards(deck: MemoryDeckCard[], pairCount = MAX_PAIRS): LocalCard[] {
+function makeLocalCards(deck: MemoryDeckCard[], pairCount = DEFAULT_PAIR_COUNT): LocalCard[] {
   return shuffle(
     deck.slice(0, pairCount).flatMap((card, index) => {
       const pairId = `solo-pair-${index}`;
@@ -99,8 +113,8 @@ export default function MemoryPage() {
   const { activeLobbyId, activeLobbyName, isAuthenticated } = useContext(AppContext);
 
   const [mode, setMode] = useState<"solo" | "multi">("solo");
-  const [deck, setDeck] = useState<MemoryDeckCard[]>(DEFAULT_DECK);
-  const [editableDeck, setEditableDeck] = useState<EditableDeckCard[]>(() => toEditableDeck(DEFAULT_DECK));
+  const [deck, setDeck] = useState<MemoryDeckCard[]>(DEFAULT_MEMORY_DECK);
+  const [editableDeck, setEditableDeck] = useState<EditableDeckCard[]>(() => toEditableDeck(DEFAULT_MEMORY_DECK));
   const [suggestions, setSuggestions] = useState<EditableDeckCard[]>([]);
   const [deckPanel, setDeckPanel] = useState<"deck" | "search" | "add">("deck");
   const [selectedDeckKey, setSelectedDeckKey] = useState<string | null>(null);
@@ -114,11 +128,11 @@ export default function MemoryPage() {
   const [savedDrawingsError, setSavedDrawingsError] = useState<string | null>(null);
   const [loadingSavedDrawings, setLoadingSavedDrawings] = useState(false);
   const [portalEl] = useState(() => document.createElement("div"));
-  const [pairCount, setPairCount] = useState(8);
+  const [pairCount, setPairCount] = useState(DEFAULT_PAIR_COUNT);
   const [moveLimitMode, setMoveLimitMode] = useState<"unlimited" | "20" | "50" | "custom">("unlimited");
   const [customMoveLimit, setCustomMoveLimit] = useState(30);
 
-  const [localCards, setLocalCards] = useState<LocalCard[]>(() => makeLocalCards(DEFAULT_DECK));
+  const [localCards, setLocalCards] = useState<LocalCard[]>(() => makeLocalCards(DEFAULT_MEMORY_DECK, DEFAULT_PAIR_COUNT));
   const [localFirstPick, setLocalFirstPick] = useState<string | null>(null);
   const [localLocked, setLocalLocked] = useState(false);
   const [localMoves, setLocalMoves] = useState(0);
@@ -642,8 +656,8 @@ export default function MemoryPage() {
           {deckPanel === "add" && (
             <div className="memory-panel-section" role="tabpanel">
               <div className="memory-actions memory-actions-compact">
-                <button className="btn btn-secondary" onClick={() => applyDeck(DEFAULT_DECK, "Standardbilder geladen. Solo wurde neu gemischt.")}>
-                  Standarddeck
+                <button className="btn btn-secondary" onClick={() => applyDeck(DEFAULT_MEMORY_DECK, "Standarddeck mit 8 Bildern geladen. Solo wurde neu gemischt.")}>
+                  Standarddeck (8 Bilder)
                 </button>
                 <button className="btn btn-secondary" onClick={openSavedDrawingsPicker} disabled={loadingDeck}>
                   Gespeicherte Zeichnungen
@@ -652,6 +666,27 @@ export default function MemoryPage() {
                   Bilder hochladen
                   <input aria-label="Eigene Bilder für Memory hochladen" type="file" accept="image/*" multiple hidden onChange={(e) => handleUpload(e.target.files)} />
                 </label>
+              </div>
+
+              <div className="memory-sticker-bank" aria-label="Sticker zum Memory-Deck hinzufügen">
+                <strong>Sticker hinzufügen</strong>
+                <div>
+                  {EXTRA_STICKER_CARDS.map((card) => {
+                    const isDuplicate = editableDeck.some((deckCard) => normalizeImageUrl(deckCard.imageUrl) === normalizeImageUrl(card.imageUrl));
+                    return (
+                      <button
+                        key={`${card.title}-${card.imageUrl}`}
+                        className={`memory-sticker-option ${isDuplicate ? "is-added" : ""}`}
+                        onClick={() => addToDeck(card)}
+                        disabled={editableDeck.length >= MAX_PAIRS || isDuplicate}
+                        aria-label={isDuplicate ? `${card.title} ist schon im Deck` : `${card.title} zum Deck hinzufügen`}
+                      >
+                        <img src={card.imageUrl} alt="" />
+                        <span>{card.title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="memory-manual">
