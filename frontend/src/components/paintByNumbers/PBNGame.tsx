@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { AppContext } from "../../context/AppContext";
 import { listDrawings, type DrawingSummary } from "../../api/drawingsApi";
 import { imageUrlToDataUrl, searchImages } from "../../api/imageApi";
+import { STICKER_CATEGORIES } from "../sticker/stickers";
 import {
   emitGeneratePBN,
   onPBNReady,
@@ -20,8 +21,19 @@ import "./PBNGame.css";
 
 // Restiction to 1200px img size for PBN pipeline speedup
 const MAX_DIM = 1200;
-type SourceTab = "upload" | "saved" | "search";
+type SourceTab = "templates" | "upload" | "saved" | "search";
 type SearchImage = { id: number | string; url: string; alt: string };
+
+const PBN_TEMPLATES = Object.values(STICKER_CATEGORIES)
+  .flat()
+  .filter((sticker) => sticker.isImage && sticker.icon)
+  .filter((sticker) => !["test", "flower2"].includes(sticker.id))
+  .reduce<Array<{ id: string; title: string; url: string }>>((items, sticker) => {
+    const key = sticker.label.trim().toLowerCase();
+    if (!key || items.some((item) => item.title.trim().toLowerCase() === key)) return items;
+    items.push({ id: sticker.id, title: sticker.label, url: sticker.icon });
+    return items;
+  }, []);
 
 //loads pic downscales and returns as jpeg
 function downscaleImage(file: File): Promise<string> {
@@ -52,12 +64,43 @@ function downscaleImage(file: File): Promise<string> {
   });
 }
 
+function localImageToDataUrl(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("canvas error"));
+        return;
+      }
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error("error loading template"));
+    img.src = url;
+  });
+}
+
+async function imageSourceToDataUrl(url: string): Promise<string> {
+  return url.startsWith("/") ? localImageToDataUrl(url) : imageUrlToDataUrl(url);
+}
+
 export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
   const { activeLobbyId, currentColor, setCurrentColor, pbnPalette, setPbnPalette, isAuthenticated } =
     useContext(AppContext);
 
   const [open, setOpen] = useState(false);
-  const [sourceTab, setSourceTab] = useState<SourceTab>("upload");
+  const [sourceTab, setSourceTab] = useState<SourceTab>("templates");
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [savedDrawings, setSavedDrawings] = useState<DrawingSummary[]>([]);
@@ -170,10 +213,23 @@ export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
     setSourceLoading(true);
     setError(null);
     try {
-      setImageDataUrl(await imageUrlToDataUrl(image.url));
+      setImageDataUrl(await imageSourceToDataUrl(image.url));
       setFileName(image.alt || "Suchbild");
     } catch {
       setError("Dieses Bild konnte nicht vorbereitet werden.");
+    } finally {
+      setSourceLoading(false);
+    }
+  };
+
+  const handleTemplateSelect = async (template: { title: string; url: string }) => {
+    setSourceLoading(true);
+    setError(null);
+    try {
+      setImageDataUrl(await imageSourceToDataUrl(template.url));
+      setFileName(template.title);
+    } catch {
+      setError("Diese Vorlage konnte nicht vorbereitet werden.");
     } finally {
       setSourceLoading(false);
     }
@@ -219,6 +275,9 @@ export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
                 ) : (
                   <>
                 <div className="pbn-source-tabs" aria-label="Bildquelle">
+                  <button className={sourceTab === "templates" ? "is-active" : ""} onClick={() => changeSourceTab("templates")} type="button">
+                    Vorlagen
+                  </button>
                   <button className={sourceTab === "upload" ? "is-active" : ""} onClick={() => changeSourceTab("upload")} type="button">
                     Hochladen
                   </button>
@@ -229,6 +288,23 @@ export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
                     Suchen
                   </button>
                 </div>
+
+                {sourceTab === "templates" && (
+                  <div className="pbn-picker">
+                    {sourceLoading ? (
+                      <p className="pbn-placeholder">Lädt...</p>
+                    ) : (
+                      <div className="pbn-source-grid">
+                        {PBN_TEMPLATES.map((template) => (
+                          <button key={template.id} type="button" className="pbn-source-card" onClick={() => handleTemplateSelect(template)}>
+                            <img src={template.url} alt={template.title} />
+                            <span>{template.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {sourceTab === "upload" && (
                 <label className="pbn-upload">
