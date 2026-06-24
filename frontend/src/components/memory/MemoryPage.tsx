@@ -677,7 +677,7 @@ export default function MemoryPage() {
             <button className="btn btn-secondary" onClick={() => startSolo(selectedPlayableDeck)} disabled={!deckReady}>
               Solo mit Deck starten
             </button>
-            <button className="btn btn-secondary" onClick={startMulti} disabled={!activeLobbyId || !deckReady}>
+            <button className="btn btn-secondary" onClick={startMulti}>
               Lobby-Spiel starten
             </button>
             {mode === "multi" && remoteState && (
@@ -706,6 +706,10 @@ export default function MemoryPage() {
             <div className="memory-empty">
               <h2>Noch kein Lobby-Spiel</h2>
               <p>Starte ein Spiel mit dem aktuellen Deck, sobald du in einer Lobby bist.</p>
+              <button className="btn btn-secondary memory-empty-start" onClick={startMulti}>
+                Lobby-Spiel starten
+              </button>
+              {remoteError && <p className="memory-error" role="alert">{remoteError}</p>}
             </div>
           ) : (
             <div className="memory-board" role="list" aria-label={`Memory Spielfeld mit ${activeCards.length} Karten`}>

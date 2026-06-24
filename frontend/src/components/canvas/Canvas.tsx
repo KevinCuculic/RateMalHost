@@ -6,7 +6,7 @@
 import { useRef, useEffect, useContext, useState, useCallback } from "react";
 import { AppContext } from "../../context/AppContext";
 import { emitCanvasClear, emitCanvasUndo, emitDraw, onDraw, offDraw, onCanvasSync, offCanvasSync, type DrawEvent } from "../../socket/drawingEvents";
-import { onPBNReady, offPBNReady, toPngDataUrl, type PBNResult } from "../../socket/PBNEvents";
+import { onPBNReady, offPBNReady, toPngDataUrl, pbnColorToCss, swatchTextColor, type PBNResult } from "../../socket/PBNEvents";
 import { renderSticker} from "../../utils/shapeHelpers";
 import { STICKER_CATEGORIES } from "../sticker/stickers";
 import type { Sticker } from "../sticker/stickers";
@@ -18,7 +18,7 @@ type Point = { x: number; y: number };
 
 export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: boolean }) {
 
-  const { currentColor, activeLobbyId, tool, activeShape, stickerSize, penWidth, showGrid, setCanvasControlActions } = useContext(AppContext);
+  const { currentColor, setCurrentColor, activeLobbyId, tool, activeShape, stickerSize, penWidth, showGrid, pbnPalette, setCanvasControlActions } = useContext(AppContext);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
@@ -31,6 +31,7 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
   const [previewPos, setPreviewPos] = useState<Point | null>(null);
   const [customStickers, setCustomStickers] = useState<Sticker[]>([]);
   const [historyVersion, setHistoryVersion] = useState(0);
+  const [paletteMenuPos, setPaletteMenuPos] = useState<Point | null>(null);
   // Helpfunction, gets stickers as flat list
   //const allStickers = Object.values(STICKER_CATEGORIES).flat();
   const allStickers = [...Object.values(STICKER_CATEGORIES).flat(), ...customStickers];
@@ -64,6 +65,7 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
   };
 
   const handleMouseDown= (e: React.MouseEvent)=> {
+    setPaletteMenuPos(null);
 
     // if not left mouse button
     if (e.button !== 0) {
@@ -220,6 +222,16 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
     octx.imageSmoothingQuality = "high";
     octx.drawImage(canvas, 0, 0, off.width, off.height);
     return off.toDataURL("image/jpeg", 0.92);
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!pbnPalette?.length) return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPaletteMenuPos({
+      x: Math.min(e.clientX - rect.left, rect.width - 220),
+      y: Math.min(e.clientY - rect.top, rect.height - 180),
+    });
   };
 
   const clearLocalCanvas = useCallback(() => {
@@ -402,7 +414,10 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
 
   return (
 
-    <div style={{ position: 'relative', width: '100%', height: '100%', cursor: tool === 'shape' ? 'none' : 'crosshair' }}>
+    <div
+      style={{ position: 'relative', width: '100%', height: '100%', cursor: tool === 'shape' ? 'none' : 'crosshair' }}
+      onContextMenu={handleContextMenu}
+    >
 
     {!hideSaveButton && <SaveDrawing getThumbnail={makeThumbnail} />}
 
@@ -423,6 +438,57 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
       onTouchMove={(e) => draw(e.nativeEvent)}
       onTouchEnd={endDraw}
     />
+
+    {paletteMenuPos && pbnPalette?.length > 0 && (
+      <div
+        role="menu"
+        aria-label="Farbpalette"
+        style={{
+          position: "absolute",
+          left: Math.max(8, paletteMenuPos.x),
+          top: Math.max(8, paletteMenuPos.y),
+          zIndex: 90,
+          width: 212,
+          maxHeight: 220,
+          overflowY: "auto",
+          padding: 10,
+          border: "1px solid rgba(0,0,0,0.12)",
+          borderRadius: 8,
+          background: "#ffffff",
+          boxShadow: "0 18px 44px rgba(15,23,42,0.22)",
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 8,
+        }}
+      >
+        {pbnPalette.map((entry: { index: number; color: { r: number; g: number; b: number } }) => {
+          const css = pbnColorToCss(entry.color);
+          return (
+            <button
+              key={entry.index}
+              type="button"
+              role="menuitem"
+              aria-label={`Farbe ${entry.index} auswählen`}
+              onClick={() => {
+                setCurrentColor(css);
+                setPaletteMenuPos(null);
+              }}
+              style={{
+                aspectRatio: "1 / 1",
+                border: currentColor === css ? "3px solid #111827" : "1px solid rgba(0,0,0,0.14)",
+                borderRadius: 8,
+                background: css,
+                color: swatchTextColor(entry.color),
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              {entry.index}
+            </button>
+          );
+        })}
+      </div>
+    )}
 
     {/* DER GHOST (HTML-Vorschau) */}
     {tool === "shape" && activeShape && previewPos && (

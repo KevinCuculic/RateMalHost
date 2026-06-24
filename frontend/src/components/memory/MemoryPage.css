@@ -581,6 +581,12 @@
   font-size: 16px;
 }
 
+.memory-empty-start {
+  margin-top: 18px;
+  padding: 12px 20px;
+  font-weight: 800;
+}
+
 .memory-finished {
   display: inline-flex;
   gap: 10px;
