@@ -28,6 +28,8 @@ async function searchPexels(query: string): Promise<ImageResult[]> {
       alt: string;
       src: {
         medium: string;
+        large2x?: string;
+        original?: string;
       };
     }[];
   };
@@ -35,7 +37,7 @@ async function searchPexels(query: string): Promise<ImageResult[]> {
   const data = await response.json() as PexelsResponse;
   return (data.photos ?? []).map((photo) => ({
     id: photo.id,
-    url: photo.src.medium,
+    url: photo.src.large2x ?? photo.src.original ?? photo.src.medium,
     alt: photo.alt,
   }));
 }
@@ -49,7 +51,7 @@ async function searchWikimedia(query: string): Promise<ImageResult[]> {
     gsrlimit: "12",
     prop: "imageinfo",
     iiprop: "url|mime",
-    iiurlwidth: "500",
+    iiurlwidth: "1200",
     format: "json",
     origin: "*",
   });

@@ -27,11 +27,13 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
   const historyRef = useRef<DrawEvent[]>([]);
   const pbnImageRef = useRef<HTMLImageElement | null>(null);
   const repaintRef = useRef<() => void>(() => {});
+  const paletteButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const [previewPos, setPreviewPos] = useState<Point | null>(null);
   const [customStickers, setCustomStickers] = useState<Sticker[]>([]);
   const [historyVersion, setHistoryVersion] = useState(0);
   const [paletteMenuPos, setPaletteMenuPos] = useState<Point | null>(null);
+  const [paletteFocusIndex, setPaletteFocusIndex] = useState(0);
   // Helpfunction, gets stickers as flat list
   //const allStickers = Object.values(STICKER_CATEGORIES).flat();
   const allStickers = [...Object.values(STICKER_CATEGORIES).flat(), ...customStickers];
@@ -168,7 +170,7 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
       renderEvent(ctx, eventData);
       historyRef.current.push(eventData);
       markHistoryChanged();
-      emitDraw({ lobbyId: activeLobbyId, canvasWidth: canvasRef.current!.width, data: eventData });
+      emitDraw({ lobbyId: activeLobbyId, canvasWidth: canvasRef.current!.getBoundingClientRect().width, data: eventData });
       return;
     }
 
@@ -196,7 +198,7 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
     renderEvent(ctx, eventData);
     historyRef.current.push(eventData);
     markHistoryChanged();
-    emitDraw({ lobbyId: activeLobbyId, canvasWidth: canvasRef.current!.width, data: eventData });
+    emitDraw({ lobbyId: activeLobbyId, canvasWidth: canvasRef.current!.getBoundingClientRect().width, data: eventData });
     lastPoint.current = p;
   };
 
@@ -228,10 +230,43 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
     if (!pbnPalette?.length) return;
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
+    const currentIndex = pbnPalette.findIndex((entry: { color: { r: number; g: number; b: number } }) => pbnColorToCss(entry.color) === currentColor);
+    setPaletteFocusIndex(currentIndex >= 0 ? currentIndex : 0);
     setPaletteMenuPos({
       x: Math.min(e.clientX - rect.left, rect.width - 220),
       y: Math.min(e.clientY - rect.top, rect.height - 180),
     });
+  };
+
+  useEffect(() => {
+    if (!paletteMenuPos) return;
+    window.setTimeout(() => paletteButtonRefs.current[paletteFocusIndex]?.focus(), 0);
+  }, [paletteMenuPos, paletteFocusIndex]);
+
+  const handlePaletteKeyDown = (e: React.KeyboardEvent) => {
+    if (!pbnPalette?.length) return;
+    const lastIndex = pbnPalette.length - 1;
+    let nextIndex = paletteFocusIndex;
+
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIndex = Math.min(lastIndex, paletteFocusIndex + 1);
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIndex = Math.max(0, paletteFocusIndex - 1);
+    else if (e.key === "Home") nextIndex = 0;
+    else if (e.key === "End") nextIndex = lastIndex;
+    else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      paletteButtonRefs.current[paletteFocusIndex]?.click();
+      return;
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setPaletteMenuPos(null);
+      return;
+    } else {
+      return;
+    }
+
+    e.preventDefault();
+    setPaletteFocusIndex(nextIndex);
+    paletteButtonRefs.current[nextIndex]?.focus();
   };
 
   const clearLocalCanvas = useCallback(() => {
@@ -336,16 +371,27 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
     const ctx = canvas.getContext("2d")!;
 
     const container = canvas.parentElement!;
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    const getLogicalSize = () => ({
+      width: Math.max(1, container.clientWidth),
+      height: Math.max(1, container.clientHeight),
+    });
+    const fitCanvasToContainer = () => {
+      const { width, height } = getLogicalSize();
+      const ratio = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    };
+    fitCanvasToContainer();
 
     // Zeichnet eine geladene PBN-Vorlage zentriert/eingepasst auf den Canvas.
     const drawPbn = (img: HTMLImageElement) => {
-      const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const { width, height } = getLogicalSize();
+      const scale = Math.min(width / img.width, height / img.height);
       const w = img.width * scale;
       const h = img.height * scale;
-      const x = (canvas.width - w) / 2;
-      const y = (canvas.height - h) / 2;
+      const x = (width - w) / 2;
+      const y = (height - h) / 2;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, x, y, w, h);
@@ -353,7 +399,8 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
 
     // Baut den Canvas komplett aus dem gehaltenen Zustand neu auf.
     const repaint = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const { width, height } = getLogicalSize();
+      ctx.clearRect(0, 0, width, height);
       if (pbnImageRef.current) drawPbn(pbnImageRef.current);
       historyRef.current.forEach((ev) => renderEvent(ctx, ev));
     };
@@ -364,8 +411,7 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
     // zeichnen wir aus historyRef neu, statt das alte Bitmap zu kopieren
     // (getImageData/putImageData würde beim Verkleinern abschneiden).
     const ro = new ResizeObserver(() => {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
+      fitCanvasToContainer();
       repaint();
     });
     ro.observe(container);
@@ -391,7 +437,8 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
       const img = new Image();
       img.onload = () => {
         pbnImageRef.current = img;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const { width, height } = getLogicalSize();
+        ctx.clearRect(0, 0, width, height);
         drawPbn(img);
         markHistoryChanged();
       };
@@ -443,6 +490,7 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
       <div
         role="menu"
         aria-label="Farbpalette"
+        onKeyDown={handlePaletteKeyDown}
         style={{
           position: "absolute",
           left: Math.max(8, paletteMenuPos.x),
@@ -461,14 +509,19 @@ export default function Canvas({ hideSaveButton = false }: { hideSaveButton?: bo
           gap: 8,
         }}
       >
-        {pbnPalette.map((entry: { index: number; color: { r: number; g: number; b: number } }) => {
+        {pbnPalette.map((entry: { index: number; color: { r: number; g: number; b: number } }, index: number) => {
           const css = pbnColorToCss(entry.color);
           return (
             <button
               key={entry.index}
+              ref={(el) => {
+                paletteButtonRefs.current[index] = el;
+              }}
               type="button"
               role="menuitem"
+              tabIndex={index === paletteFocusIndex ? 0 : -1}
               aria-label={`Farbe ${entry.index} auswählen`}
+              onFocus={() => setPaletteFocusIndex(index)}
               onClick={() => {
                 setCurrentColor(css);
                 setPaletteMenuPos(null);

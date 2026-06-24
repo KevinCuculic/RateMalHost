@@ -130,9 +130,6 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
             )}
           </>
         )}
-        {view === "home" && (
-          <button className="btn btn-secondary">?</button>
-        )}
         {isAuthenticated ? (
           <div style={{ position: "relative" }}>
             <button
