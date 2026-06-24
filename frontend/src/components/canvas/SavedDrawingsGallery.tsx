@@ -10,7 +10,7 @@ function errorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
 
-export default function SavedDrawingsGallery() {
+export default function SavedDrawingsGallery({ triggerClassName = "btn btn-secondary lm-trigger", triggerStyle }: { triggerClassName?: string; triggerStyle?: React.CSSProperties }) {
   const { isAuthenticated, activeLobbyId } = useContext(AppContext);
 
   const [open, setOpen] = useState(false);
@@ -63,7 +63,7 @@ export default function SavedDrawingsGallery() {
 
   return (
     <>
-      <button className="btn btn-secondary lm-trigger" onClick={() => setOpen(true)}>
+      <button className={triggerClassName} style={triggerStyle} onClick={() => setOpen(true)}>
         Meine Zeichnungen
       </button>
 

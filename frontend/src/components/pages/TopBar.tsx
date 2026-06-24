@@ -102,7 +102,18 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
               </div>
             )}
             {!isPaintByNumbers && (
-              <>
+              <div
+                aria-label="Zeichenaktionen"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "4px",
+                  border: "1px solid rgba(79,70,229,0.16)",
+                  borderRadius: "12px",
+                  background: "#f8fbff",
+                }}
+              >
             <button
               type="button"
               className="btn btn-secondary"
@@ -120,10 +131,9 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
             >
               Löschen
             </button>
-            <SavedDrawingsGallery />
-              </>
+              </div>
             )}
-            {selectedMode !== "guessing-game" && !isPaintByNumbers && (
+            {selectedMode !== "guessing-game" && selectedMode !== "group-draw" && !isPaintByNumbers && (
               <button className="btn btn-secondary" onClick={onMemoryClick} aria-label="Memory Spiel öffnen">
                 Memory
               </button>
@@ -156,6 +166,10 @@ export default function TopBar({ view, selectedMode, onBack, onLoginClick, onMem
                   zIndex: 1200,
                 }}
               >
+                <SavedDrawingsGallery
+                  triggerClassName="btn btn-secondary"
+                  triggerStyle={{ width: "100%", justifyContent: "center", marginBottom: "8px" }}
+                />
                 <button
                   type="button"
                   className="btn btn-secondary"
