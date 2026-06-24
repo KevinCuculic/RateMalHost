@@ -343,7 +343,7 @@ export default function MemoryPage() {
       } else {
         setLiveMessage("Die Karten wurden wieder verdeckt.");
       }
-    }, 1600);
+    }, 1000);
   };
 
   const handleCardClick = (card: MemoryCard) => {

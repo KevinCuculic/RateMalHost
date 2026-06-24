@@ -607,7 +607,7 @@ io.on("connection", (socket) => {
         if (!current || current.id !== game.id) return;
         hideMemoryMismatch(current);
         emitMemoryState(lobbyId);
-      }, 1600);
+      }, 1000);
     }
   });
 

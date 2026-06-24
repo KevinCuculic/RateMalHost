@@ -180,7 +180,11 @@ export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
   };
 
   const handleGenerate = () => {
-    if (!activeLobbyId || !imageDataUrl) return;
+    if (!activeLobbyId) {
+      setError("Wähle zuerst oben eine Lobby aus.");
+      return;
+    }
+    if (!imageDataUrl) return;
     setError(null);
     setLoading(true);
     emitGeneratePBN({ lobbyId: activeLobbyId, image: imageDataUrl, difficulty });
@@ -207,6 +211,13 @@ export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
               <section className="pbn-panel">
                 <h3>1 · Bild &amp; Schwierigkeit</h3>
 
+                {!activeLobbyId ? (
+                  <div className="pbn-lobby-required">
+                    <strong>Zuerst Lobby wählen</strong>
+                    <span>Schließe dieses Fenster kurz und wähle oben eine Lobby aus. Danach kannst du Bild und Schwierigkeit auswählen.</span>
+                  </div>
+                ) : (
+                  <>
                 <div className="pbn-source-tabs" aria-label="Bildquelle">
                   <button className={sourceTab === "upload" ? "is-active" : ""} onClick={() => changeSourceTab("upload")} type="button">
                     Hochladen
@@ -292,6 +303,8 @@ export default function PBNGame({ autoOpen = false }: { autoOpen?: boolean }) {
                   </div>
                 )}
                 {fileName && <p className="pbn-filename">{fileName}</p>}
+                  </>
+                )}
 
                 <label className="pbn-difficulty">
                   <span>

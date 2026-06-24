@@ -120,6 +120,30 @@
   padding: 10px;
 }
 
+.pbn-lobby-required {
+  display: grid;
+  gap: 8px;
+  min-height: 160px;
+  place-content: center;
+  padding: 18px;
+  border: 2px dashed #93c5fd;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #174ea6;
+  text-align: center;
+}
+
+.pbn-lobby-required strong {
+  font-size: 18px;
+}
+
+.pbn-lobby-required span {
+  max-width: 280px;
+  color: #375f95;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .pbn-source-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
