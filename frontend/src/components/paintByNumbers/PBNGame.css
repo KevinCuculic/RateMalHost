@@ -81,33 +81,53 @@
   font-size: 14px;
   font-weight: 700;
   color: #1a6dd4;
-  letter-spacing: 0.01em;
+  line-height: 1.35;
+  letter-spacing: 0;
 }
 
 .pbn-source-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 0;
   padding: 4px;
   border-radius: 8px;
   background: #eef2f7;
 }
 
 .pbn-source-tabs button {
+  position: relative;
   min-width: 0;
-  padding: 8px 6px;
+  padding: 9px 8px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: #4b5563;
+  font-size: 13px;
   font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0;
   cursor: pointer;
+}
+
+.pbn-source-tabs button + button::before {
+  content: "|";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-weight: 700;
 }
 
 .pbn-source-tabs button.is-active {
   background: #ffffff;
   color: #1a6dd4;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+.pbn-source-tabs button.is-active::before,
+.pbn-source-tabs button.is-active + button::before {
+  content: "";
 }
 
 .pbn-picker {

@@ -30,7 +30,7 @@
 
 .memory-mode {
   display: flex;
-  gap: 4px;
+  gap: 0;
   padding: 4px;
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -38,21 +38,40 @@
 }
 
 .memory-mode button {
+  position: relative;
   min-width: 78px;
   min-height: 44px;
+  padding: 0 14px;
   border: 0;
   border-radius: 9px;
   background: transparent;
   color: #374151;
   font-size: 16px;
   font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
   cursor: pointer;
+}
+
+.memory-mode button + button::before {
+  content: "|";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-weight: 700;
 }
 
 .memory-mode button.is-active {
   background: #1a6dd4;
   color: #ffffff;
   box-shadow: inset 0 0 0 2px #0f3f7e;
+}
+
+.memory-mode button.is-active::before,
+.memory-mode button.is-active + button::before {
+  content: "";
 }
 
 .memory-layout {
@@ -154,22 +173,44 @@
 .memory-deck-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 0;
   margin-bottom: 8px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #eef2f7;
 }
 
 .memory-deck-tabs button {
-  min-height: 38px;
+  position: relative;
+  min-height: 40px;
+  padding: 0 10px;
   border: 0;
   border-radius: 9px;
-  background: #f3f7fb;
+  background: transparent;
   color: #1f2937;
   font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.memory-deck-tabs button + button::before {
+  content: "|";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-weight: 700;
 }
 
 .memory-deck-tabs button.is-active {
   background: #1a6dd4;
   color: #ffffff;
+}
+
+.memory-deck-tabs button.is-active::before,
+.memory-deck-tabs button.is-active + button::before {
+  content: "";
 }
 
 .memory-panel-section {

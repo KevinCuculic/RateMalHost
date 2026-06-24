@@ -84,7 +84,7 @@
   display: grid; place-items: center;
   font-weight: 800;
   font-size: 20px;
-  letter-spacing: -.02em;
+  letter-spacing: 0;
   position: relative;
 }
 .rm-brand__mark::after {
@@ -98,7 +98,7 @@
 .rm-brand__name {
   font-weight: 700;
   font-size: 18px;
-  letter-spacing: -.01em;
+  letter-spacing: 0;
 }
 .rm-brand__name-accent { color: var(--rm-brand); }
 
@@ -121,6 +121,8 @@
   color: var(--rm-ink-2);
   padding: 10px 12px;
   border-radius: 9px;
+  line-height: 1.25;
+  letter-spacing: 0;
   cursor: pointer;
   transition: color .2s ease;
 }
@@ -137,8 +139,8 @@
   margin: 0 0 8px;
   font-size: 32px;
   font-weight: 700;
-  letter-spacing: -.02em;
   line-height: 1.1;
+  letter-spacing: 0;
 }
 .rm-head p {
   margin: 0 0 28px;
@@ -154,7 +156,8 @@
   font-weight: 600;
   color: var(--rm-ink);
   margin-bottom: 8px;
-  letter-spacing: .01em;
+  line-height: 1.25;
+  letter-spacing: 0;
 }
 
 .rm-input {
@@ -209,7 +212,8 @@
   margin-top: 8px;
   font-size: 12px;
   color: var(--rm-ink-3);
-  letter-spacing: .04em;
+  line-height: 1.35;
+  letter-spacing: 0;
   text-transform: uppercase;
   font-weight: 600;
 }
@@ -292,7 +296,8 @@
   font: inherit;
   font-weight: 700;
   font-size: 16px;
-  letter-spacing: -.005em;
+  line-height: 1.25;
+  letter-spacing: 0;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
